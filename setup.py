@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='cryptowatson-indicators',
-    packages=find_packages(include=['cryptowatsonindicators']),
+    packages=find_packages(include=['cryptowatsonindicators*']),
     version='0.0.1',
     description='Python package to calculate crypto indicators and run trading simulations',
     author='Me',
