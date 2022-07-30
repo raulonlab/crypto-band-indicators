@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import nasdaqdatalink
-from helpers import data
+from .helpers import data
 
 def _rwa_logarithmic_function(x,a,b,c):
     return a*np.log(b+x) + c
