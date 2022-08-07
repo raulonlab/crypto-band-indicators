@@ -8,14 +8,19 @@ venv/touchfile: requirements.txt
 	. venv/bin/activate; pip3 install -Ur requirements.txt
 	touch venv/touchfile
 
-### activate environment and install requirements
-install:venv
+### activate environment, install requirements and local package (.)
+install: venv
+	. venv/bin/activate; pip3 install -e .
 
-### activate environment and run tests
+### activate environment, install requirements an install ipython kernel in venv
+install-ipython-kernel: venv
+	ipython kernel install --user --name=venv
+
+### activate environment, install requirements and run tests
 test: venv
 	. venv/bin/activate; python3 setup.py pytest
 
-### activate environment and build package
+### activate environment, install requirements and build package
 build: venv
 	. venv/bin/activate; python3 setup.py bdist_wheel
 
