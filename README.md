@@ -40,3 +40,14 @@ The Fear and Greed Index is a tool that helps investors and traders analyze the 
     - https://colab.research.google.com/
     - http://cocalc.com/
     - https://github.com/features/codespaces
+
+# Notes
+
+- Alternative API misses these dates:
+merged = pd.merge(fng_data, ticker_data, how='outer', on='Date')
+print('merged:\n', merged)
+1646 2018-04-14      NaN           NaN   8036.511051
+1647 2018-04-15      NaN           NaN   8340.748333
+1648 2018-04-16      NaN           NaN   8368.100000
+
+

@@ -87,7 +87,7 @@ def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] =
             
             # Convert column types and discard invalid data
             missing_data['Date'] = pd.to_datetime(missing_data['Date']) # Ensure that the date is in datetime
-            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='coerce')
+            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='raise')
             missing_data = missing_data[missing_data["Value"] > 0]   # Drop 0 or np values
             
             if (len(missing_data) == 0):
@@ -103,7 +103,7 @@ def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] =
     all_data = pd.concat([cached_data, missing_data])  #.reset_index()
     all_data.to_csv(NASDAQ_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
 
-    return all_data
+    return all_data[all_data['Date'] >= start_date].reset_index(drop=True)
 
 
 def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
@@ -139,13 +139,13 @@ def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> 
             fng_response = get_fng_history(limit=0)
 
         try:
-            missing_data =  pd.DataFrame(fng_response, columns=['timestamp', 'value', 'value_classification']).reset_index()
+            missing_data =  pd.DataFrame(fng_response, columns=['timestamp', 'value', 'value_classification']).reset_index(drop=True)
             # missing_data = missing_data.iloc[::-1] # reverse index (from oldest to newest)
             missing_data = missing_data.rename(columns={'timestamp': 'Date', 'value': 'Value', 'value_classification': 'ValueName'})
             
             # Convert column types and discard invalid data
             missing_data['Date'] = missing_data['Date'].apply(lambda x: datetime.fromtimestamp(int(x)))
-            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='coerce')
+            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='raise')
             missing_data = missing_data[missing_data["Value"] > 0]  # Drop 0 or np values
             
             if (len(missing_data) == 0):
@@ -160,4 +160,5 @@ def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> 
     # concatenate cached and missing data, save to csv and return filtered
     all_data = pd.concat([cached_data, missing_data])   # .reset_index()
     all_data.to_csv(FNG_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
-    return all_data[all_data['Date'] >= start_date]
+
+    return all_data[all_data['Date'] >= start_date].reset_index(drop=True)
