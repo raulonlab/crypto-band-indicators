@@ -1,10 +1,14 @@
 from binance.client import Client
-# from binance.exceptions import BinanceAPIException, BinanceOrderException
+from typing import Union
 import pandas as pd
+import numpy as np
 import nasdaqdatalink
 from datetime import datetime, date, timedelta
+from .alternative import get_fng_history
+from .utils import parse_any_date
 
 NASDAQ_CSV_CACHE_PATH = 'btcusdt_1d_nasdaq.csv'
+FNG_CSV_CACHE_PATH = 'fng_1d_alternative.csv'
 
 def get_binance_ticker_market_price(binance_api_key:str, binance_secret_key:str, ticker_symbol: str = 'BTCUSDT'):
     client = Client(binance_api_key, binance_secret_key)
@@ -14,7 +18,7 @@ def get_binance_ticker_market_price(binance_api_key:str, binance_secret_key:str,
     
     return client.get_symbol_ticker(symbol=ticker_symbol)
 
-def get_binance_ticker_time_series(binance_api_key:str, binance_secret_key:str, ticker_symbol: str = 'BTCUSDT', days: int = 365, granularity:str = '1d'):
+def get_binance_ticker_time_series(binance_api_key:str, binance_secret_key:str, ticker_symbol: str = 'BTCUSDT', days: int = 365, granularity:str = '1d') -> pd.DataFrame:
     """
     Gets ticker price of a specific coin pair
     """
@@ -46,39 +50,114 @@ def get_binance_ticker_time_series(binance_api_key:str, binance_secret_key:str, 
     return(coindata.reindex(columns =['date', key]))
 
 
-def get_nasdaq_ticker_time_series():
+def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+    start_date = parse_any_date(start_date, datetime(2010, 1, 1))
+
+    cached_data = None
+    missing_data = None
+
     # Load cached csv data
-    csv_data = None
-    missing_start_date = None
     try:
-        csv_data = pd.read_csv(NASDAQ_CSV_CACHE_PATH, sep = ';')
-        if isinstance(csv_data, pd.DataFrame):
-            csv_data['Date'] = pd.to_datetime(csv_data['Date'], format='%Y-%m-%d')
-            # last_date = datetime.strptime(csv_data.iloc[-1,0], '%Y-%m-%d').date()
-            last_date = pd.to_datetime(csv_data.iloc[-1]['Date'], format='%Y-%m-%d').date()
-            # print('type(last_date): ', type(last_date))
-            # print('last_date: ', last_date)
-            # print('date.today(): ', date.today())
-
-            if (last_date == date.today()):
-                return csv_data
-
-            missing_start_date = last_date + timedelta(days=1)
-            # print('missing_start_date: ', missing_start_date)
+        cached_data = pd.read_csv(NASDAQ_CSV_CACHE_PATH, sep = ';')
+        if isinstance(cached_data, pd.DataFrame):
+            # Convert column types and discard invalid data
+            cached_data['Date'] = pd.to_datetime(cached_data['Date'], format='%Y-%m-%d')
+            cached_data['Value'] = pd.to_numeric(cached_data['Value'], errors='coerce')
+            cached_data = cached_data[cached_data["Value"] > 0]  # Drop 0 or np values
+            
+            try:
+                last_date_cached = cached_data.iloc[-1]['Date'].date()
+            except:
+                last_date_cached = None # In case we want a day before start_date: start_date - timedelta(days=1)
     except Exception as e:
         print(f"Error reading csv file {NASDAQ_CSV_CACHE_PATH}: {e}")
-        csv_data = None
+        cached_data = None
+        last_date_cached = None
 
-    # Fech data from https://data.nasdaq.com/. 50 free API calls per day without keys and unlimited with keys (free with a signed up account).
-    if (missing_start_date):
-        nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU", start_date=missing_start_date)
-    else:
-        nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU")
+    # Load missing data if needed (from Nasdaq. 50 free daily calls without keys)
+    if (not last_date_cached or last_date_cached != date.today()):
+        if (last_date_cached):
+            query_start_date = last_date_cached + timedelta(days=1)
+            nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU", start_date=query_start_date)
+        else:
+            nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU")
     
-    missing_data =  pd.DataFrame(nasdaq_response).reset_index()
-    missing_data['Date'] = pd.to_datetime(missing_data['Date']) # Ensure that the date is in datetime or graphs might look funny
-    missing_data = missing_data[missing_data["Value"] > 0] # Drop all 0 values as they will fuck up the regression bands
+        try:
+            missing_data =  pd.DataFrame(nasdaq_response).reset_index()
+            
+            # Convert column types and discard invalid data
+            missing_data['Date'] = pd.to_datetime(missing_data['Date']) # Ensure that the date is in datetime
+            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='coerce')
+            missing_data = missing_data[missing_data["Value"] > 0]   # Drop 0 or np values
+            
+            if (len(missing_data) == 0):
+                missing_data = None
+        except Exception as e:
+            print(f"Error parsing nasdaq response: {e}")
+            missing_data = None
+    
+    if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
+        return None
 
-    all_data = pd.concat([csv_data, missing_data])
-    all_data.to_csv(NASDAQ_CSV_CACHE_PATH, sep = ';', index=False)
+    # concatenate cached and missing data, save to csv and return filtered
+    all_data = pd.concat([cached_data, missing_data])  #.reset_index()
+    all_data.to_csv(NASDAQ_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
+
     return all_data
+
+
+def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+    start_date = parse_any_date(start_date, datetime(2010, 1, 1))
+    
+    cached_data = None
+    missing_data = None
+
+    # Load cached data
+    try:
+        cached_data = pd.read_csv(FNG_CSV_CACHE_PATH, sep = ';')
+        if isinstance(cached_data, pd.DataFrame):
+            # Convert column types and discard invalid data
+            cached_data['Date'] = pd.to_datetime(cached_data['Date'], format='%Y-%m-%d')
+            cached_data['Value'] = pd.to_numeric(cached_data['Value'], errors='coerce')
+            cached_data = cached_data[cached_data["Value"] > 0]  # Drop 0 or np values
+            
+            try:
+                last_date_cached = cached_data.iloc[-1]['Date'].date()
+            except:
+                last_date_cached = None # In case we want a day before start_date: start_date - timedelta(days=1)
+    except Exception as e:
+        print(f"Error reading csv file {FNG_CSV_CACHE_PATH}: {e}")
+        cached_data = None
+        last_date_cached = None
+
+    # Load missing data if needed
+    if (not last_date_cached or last_date_cached != date.today()):
+        if (last_date_cached):
+            limit = abs(date.today() - last_date_cached).days
+            fng_response = get_fng_history(limit=limit)
+        else:
+            fng_response = get_fng_history(limit=0)
+
+        try:
+            missing_data =  pd.DataFrame(fng_response, columns=['timestamp', 'value', 'value_classification']).reset_index()
+            # missing_data = missing_data.iloc[::-1] # reverse index (from oldest to newest)
+            missing_data = missing_data.rename(columns={'timestamp': 'Date', 'value': 'Value', 'value_classification': 'ValueName'})
+            
+            # Convert column types and discard invalid data
+            missing_data['Date'] = missing_data['Date'].apply(lambda x: datetime.fromtimestamp(int(x)))
+            missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='coerce')
+            missing_data = missing_data[missing_data["Value"] > 0]  # Drop 0 or np values
+            
+            if (len(missing_data) == 0):
+                missing_data = None
+        except Exception as e:
+            print(f"Error parsing fng response: {e}")
+            missing_data = None
+    
+    if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
+        return None
+
+    # concatenate cached and missing data, save to csv and return filtered
+    all_data = pd.concat([cached_data, missing_data])   # .reset_index()
+    all_data.to_csv(FNG_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
+    return all_data[all_data['Date'] >= start_date]
