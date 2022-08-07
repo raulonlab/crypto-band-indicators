@@ -72,7 +72,7 @@ def plot_rainbow(start_date: Union[str, date, datetime, None] = None):
     # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
     plt.show()
 
-def _get_rainbow_band_info_by_index(index: int = -1):
+def _get_rainbow_band_info_by_index(index: int = -1) -> dict:
     if (index < 0 or index > len(RAINBOW_BANDS_NAMES)):
         return dict()
     
@@ -140,8 +140,10 @@ def get_current_rainbow_band(binance_api_key:str, binance_secret_key:str, ticker
     else:
         current_index = 0
 
-    return {
+    query_info = {
         'ticker_symbol': ticker_symbol,
         'date': date.today(),
         'price': current_price,
-    } | _get_rainbow_band_info_by_index(current_index)
+    }
+    band_info = _get_rainbow_band_info_by_index(current_index)
+    return {**query_info, **band_info}
