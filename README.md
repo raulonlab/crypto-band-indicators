@@ -8,7 +8,11 @@ Python package to calculate crypto indicators and run trading simulations
 
 Rainbow-Weighted Averagin (RWA) is a variation of the traditional Dollar Cost Average (DCA) method of investing that takes into account the current Rainbox Index. The idea comes from [this post in Reddit by the user u/pseudoHappyHippy](https://www.reddit.com/r/CryptoCurrency/comments/qg9s6v/introducing_rainbowweighted_averaging_a_more/). The author claims that RWA outperforms DCA 96.8% of the time by an average of 35.3% greater returns when applied to historical BTC price data
 
-- BTC Rainbow chart: [Bitcoin Rainbow Chart (Live) - Blockchaincenter](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)
+- BTC Rainbow chart: 
+    - [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-rainbow-chart/)
+    - [Bitcoin Rainbow Chart (Live) - Blockchaincenter](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)
+
+- [Bitcoin Logarithmic Growth Curves @ lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-logarithmic-growth-curve/)
   
 - ETH Rainbow chart: [Ethereum Rainbow Chart - Blockchaincenter](https://www.blockchaincenter.net/ethereum-rainbow-chart/)
 
@@ -23,6 +27,8 @@ The Fear and Greed Index is a tool that helps investors and traders analyze the 
 
 - Creating a Rainbow Weighted Average Trading bot with Python: https://blog.devgenius.io/creating-a-rainbow-weighted-average-trading-bot-with-python-99f13642a2c9
     - Source code: https://github.com/Totesthegoats/rwa_bot
+    - RWA strategy revisited: https://medium.com/@chris_42047/the-rainbow-weighted-average-strategy-revisited-afb02b45aead
+    - Logarithmic (non-linear) regression - Bitcoin estimated value @ bitcointalk.org: https://bitcointalk.org/index.php?topic=831547
 
 - Fear and Greed Index API: https://alternative.me/crypto/fear-and-greed-index/#api
 
