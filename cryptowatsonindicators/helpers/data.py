@@ -1,5 +1,6 @@
 from binance.client import Client
 from typing import Union
+from traceback import format_exc
 import pandas as pd
 import numpy as np
 import nasdaqdatalink
@@ -70,7 +71,7 @@ def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] =
             except:
                 last_date_cached = None # In case we want a day before start_date: start_date - timedelta(days=1)
     except Exception as e:
-        print(f"Error reading csv file {NASDAQ_CSV_CACHE_PATH}: {e}")
+        print(f"Error reading csv file {NASDAQ_CSV_CACHE_PATH}: {repr(e)}")
         cached_data = None
         last_date_cached = None
 
@@ -83,24 +84,23 @@ def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] =
             nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU")
     
         try:
-            missing_data =  pd.DataFrame(nasdaq_response).reset_index()
+            missing_data =  pd.DataFrame(nasdaq_response).reset_index()     # reset index to the default rather than DateIndex
             
             # Convert column types and discard invalid data
-            missing_data['Date'] = pd.to_datetime(missing_data['Date']) # Ensure that the date is in datetime
             missing_data['Value'] = pd.to_numeric(missing_data['Value'], errors='raise')
             missing_data = missing_data[missing_data["Value"] > 0]   # Drop 0 or np values
-            
+
             if (len(missing_data) == 0):
                 missing_data = None
         except Exception as e:
-            print(f"Error parsing nasdaq response: {e}")
+            print(f"Error parsing nasdaq response... {format_exc()}")
             missing_data = None
     
     if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
         return None
 
     # concatenate cached and missing data, save to csv and return filtered
-    all_data = pd.concat([cached_data, missing_data])  #.reset_index()
+    all_data = pd.concat([cached_data, missing_data])       # .reset_index(drop=True)
     all_data.to_csv(NASDAQ_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
 
     return all_data[all_data['Date'] >= start_date].reset_index(drop=True)
@@ -126,7 +126,7 @@ def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> 
             except:
                 last_date_cached = None # In case we want a day before start_date: start_date - timedelta(days=1)
     except Exception as e:
-        print(f"Error reading csv file {FNG_CSV_CACHE_PATH}: {e}")
+        print(f"Error reading csv file {FNG_CSV_CACHE_PATH}: {repr(e)}")
         cached_data = None
         last_date_cached = None
 
@@ -139,7 +139,7 @@ def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> 
             fng_response = get_fng_history(limit=0)
 
         try:
-            missing_data =  pd.DataFrame(fng_response, columns=['timestamp', 'value', 'value_classification']).reset_index(drop=True)
+            missing_data =  pd.DataFrame(fng_response, columns=['timestamp', 'value', 'value_classification'])  # .reset_index(drop=True)
             # missing_data = missing_data.iloc[::-1] # reverse index (from oldest to newest)
             missing_data = missing_data.rename(columns={'timestamp': 'Date', 'value': 'Value', 'value_classification': 'ValueName'})
             
@@ -151,14 +151,14 @@ def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> 
             if (len(missing_data) == 0):
                 missing_data = None
         except Exception as e:
-            print(f"Error parsing fng response: {e}")
+            print(f"Error parsing fng response... {format_exc()}")
             missing_data = None
     
     if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
         return None
 
     # concatenate cached and missing data, save to csv and return filtered
-    all_data = pd.concat([cached_data, missing_data])   # .reset_index()
+    all_data = pd.concat([cached_data, missing_data])   # .reset_index(drop=True)
     all_data.to_csv(FNG_CSV_CACHE_PATH, sep = ';', date_format='%Y-%m-%d', index=False)
 
     return all_data[all_data['Date'] >= start_date].reset_index(drop=True)
