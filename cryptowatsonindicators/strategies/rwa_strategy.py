@@ -1,27 +1,22 @@
 from datetime import timedelta
 import backtrader as bt
-from cryptowatsonindicators import Rwa, utils
+from cryptowatsonindicators import RwaIndicator, utils
 
-class RwaIndicator(bt.Indicator):
-    lines = ('band_index', 'weight_multiplier')
+class RwaIndicatorWrapper(bt.Indicator, RwaIndicator):
+    lines = ('band_index',)
 
-    params = (('weight_type', 'fibs'),)
-
-    def __init__(self):
-        self.rwa = Rwa()
-
+    params = (('ticker_symbol', 'BTCUSDT'), )
 
     def next(self):
-        band = self.rwa.get_rainbow_band(
+        band_index = self.get_rainbow_band_index(
             price=self.data.close[0], at_date=self.data.datetime.date())
         
-        self.lines.band_index[0] = int(band.get('band_index'))
-        if self.params.weight_type == 'fibs':
-            self.lines.weight_multiplier[0] = float(
-                band.get('band_fib_multiplier'))
-        else:
-            self.lines.weight_multiplier[0] = float(
-                band.get('band_original_multiplier'))
+        if not band_index:
+            band_index = self.last_valid_band_index
+        
+        self.lines.band_index[0] = int(band_index)
+
+        self.last_valid_band_index = band_index
 
 
 class RwaStrategy(bt.Strategy):
@@ -31,7 +26,7 @@ class RwaStrategy(bt.Strategy):
         buy_frequency_days=3,  # Number of days between buys
         weight_type="fibs",    # "fibs" or "original"
         log=True,              # Enable log messages
-        debug=True,            # Enable debug messages
+        debug=False,            # Enable debug messages
     )
 
     def log(self, txt, price=None, dt=None, log_color=None):
@@ -60,13 +55,10 @@ class RwaStrategy(bt.Strategy):
         self.log(txt=txt, price=price, dt=dt, log_color=log_color)
 
     def __init__(self):
-        self.rwa = RwaIndicator(self.data, weight_type=self.params.weight_type)
-        # self.bbands = bt.indicators.BollingerBands(self.data,
-        #         period=self.params.period, devfactor=self.params.devfactor)
+        self.rwa = RwaIndicatorWrapper(self.data, weight_type=self.params.weight_type)
 
         self.price = self.datas[0].close
 
-        # self.last_order_executed_at = self.data.datetime.date(-1 * self.params.buy_frequency_days)
         self.last_order_executed_at = None
         self.order = None
 
@@ -114,48 +106,21 @@ class RwaStrategy(bt.Strategy):
 
         # Only buy every buy_frequency_days days
         if self.last_order_executed_at is not None and (self.data.datetime.date() - self.last_order_executed_at) < timedelta(self.params.buy_frequency_days):
-            # if self.position:
-            #     self.order = self.close()
             self.debug(f"  ...skip: still to soon to buy")
             return
 
-        # Long signal: it's time to buy!
-        # if self.rwa.band_index[0] > self.rwa.band_index[-1]:
-        # if not self.position:
-
-        rwa_info = Rwa._get_rainbow_info_by_index(
+        rwa_info = RwaIndicator._get_rainbow_info_by_index(
             int(self.rwa.band_index[0]))
-        buy_dol_size = self.params.buy_amount * self.rwa.weight_multiplier[0]
+        multiplier = rwa_info['original_multiplier']
+        if (self.params.weight_type == 'fibs'):
+            multiplier = rwa_info['fibs_multiplier']
+
+        buy_dol_size = self.params.buy_amount * multiplier
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
-            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Band: ({rwa_info['band_ordinal']}) {rwa_info['band_name']}, BTC price: {self.price[0]:.4f}", log_color=utils.LogColors.BOLD)
+            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Band: ({rwa_info['band_ordinal']}) {rwa_info['name']}, BTC price: {self.price[0]:.4f}", log_color=utils.LogColors.BOLD)
 
         # Keep track of the created order to avoid a 2nd order
-        # price=self.price[0], size=buy_btc_size, exectype=bt.Order.Close,
         self.order = self.buy(size=buy_btc_size)
 
 
-# print datas examples
-# Print band in the current line
-# print('self.rwa[0]: ', self.rwa[0])
-# print('self.rwa.band_index[0]: ', self.rwa.band_index[0])
-
-# print(f"type(self.price) = {type(self.price)}")
-# print(f"type(self.at_date) = {type(self.at_date)}")
-
-# print('self.datas[0].datetime.date(0): ', self.datas[0].datetime.date(0))
-# print('self.datas[0].datetime.date(): ', self.datas[0].datetime.date())
-# print('self.data.datetime.date(): ', self.data.datetime.date())
-
-# print('self.datas[0].close[0]: ', self.datas[0].close[0])
-# print('self.data.lines.close[0]: ', self.data.lines.close[0])
-# print('self.price[0]: ', self.price[0])
-# print('self.datas[0].datetime.date(): ', self.datas[0].datetime.date())
-# # print('self.datas[0].datetime[0]: ', self.datas[0].datetime[0])
-# print('self.data.datetime.date(0): ',self.data.datetime.date(0))
-
-# print('len(self.data.close): ',len(self.data.close))
-# print('len(self.data.datetime): ',len(self.data.datetime))
-# print('len(self.data.lines): ',len(self.data.lines))
-# print('len(self.data): ',len(self.data))
-# print('len(self): ',len(self))

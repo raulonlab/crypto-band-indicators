@@ -14,14 +14,11 @@ from cryptowatsonindicators import datas, utils
 # 76-100: Extreme Greed
 FNG_THRESHOLDS =  [25,             46,        54,        75,        100]
 FNG_NAMES =       ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
-FNG_COLORS =      ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
+FNG_COLORS =      ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]  # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
 FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
-class Fng:
-    indicator_data = None
-
+class FngIndicator:
     def __init__(self, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol:str = 'BTCUSDT', binance_api_key:str = '', binance_secret_key:str = ''):
-        self.indicator_start_date = indicator_start_date
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
@@ -30,7 +27,7 @@ class Fng:
         self.indicator_data = datas.get_fng_time_series(start_date=indicator_start_date)
 
         if (self.indicator_data is None or self.indicator_data.empty):
-            error_message = f"Fng.constructor: No indicator data available"
+            error_message = f"FngIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message) 
 
@@ -40,7 +37,7 @@ class Fng:
 
     def get_fng_value(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
         if (self.indicator_data is None or self.indicator_data.empty):
-            print(f"[warn] Fng.get_fng_value: No indicator data available")
+            print(f"[warn] FngIndicator.get_fng_value: No indicator data available")
             return None
         
         at_date_index = -1
@@ -52,7 +49,7 @@ class Fng:
             # find fitted_data index at date
             at_date_index_list = list(self.indicator_data[self.indicator_data['Date'] == at_date_pd].index)
             if (len(at_date_index_list) == 0):
-                print(f"[warn] Fng.get_fng_value: Data not found at date {at_date_value}")
+                print(f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date_value}")
                 return None
 
             at_date_index = int(at_date_index_list[0])
@@ -89,23 +86,11 @@ class Fng:
 
     def plot_fng(self):
         if (self.indicator_data is None or self.indicator_data.empty):
-            print(f"[warn] Fng.plot_fng: No indicator data available")
+            print(f"[warn] FngIndicator.plot_fng: No indicator data available")
             return None
 
         fig, axes = plt.subplots()
 
-        # Select rows between values: https://stackoverflow.com/questions/38884466/how-to-select-a-range-of-values-in-a-pandas-dataframe-column
-        # 0-25: Extreme Fear
-        # 26-46: Fear
-        # 47-54: Neutral
-        # 55-75: Greed
-        # 76-100: Extreme Greed
-
-        # Color gradient: https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
-        #de2121 #af5021 #808021 #50af21 #21de21
-        # Option 2: Looking at alternative.md chart palette
-        # #C05840 #FC9A24 #E5C769 #B4E168 #5CBC3C
-        # matplotlib colors: https://matplotlib.org/stable/tutorials/colors/colors.html#sphx-glr-tutorials-colors-colors-py
         # Consider using pivot(): https://pandas.pydata.org/pandas-docs/dev/getting_started/intro_tutorials/09_timeseries.html#datetime-as-index
         range1 = self.indicator_data[self.indicator_data['Value'].between(0, 25, inclusive='left')]
         range2 = self.indicator_data[self.indicator_data['Value'].between(25, 46, inclusive='left')]
@@ -146,7 +131,7 @@ class Fng:
 
     def plot_fng_and_ticker_price(self):
         if (self.indicator_data is None or self.indicator_data.empty):
-            print(f"[warn] Fng.plot_fng_and_ticker_price: No indicator data available")
+            print(f"[warn] FngIndicator.plot_fng_and_ticker_price: No indicator data available")
             return None
         
         ticker_start_date = self.indicator_data['Date'][0]
@@ -212,7 +197,7 @@ class Fng:
 
     def plot_fng_and_ticker_price_2(self):
         if (self.indicator_data is None or self.indicator_data.empty):
-            print(f"[warn] Fng.plot_fng_and_ticker_price_2: No indicator data available")
+            print(f"[warn] FngIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
         
         ticker_start_date = self.indicator_data['Date'][0]
@@ -232,7 +217,7 @@ class Fng:
         plt.yticks(fontsize='small')
 
         # fng chart ########
-        merged_data = pd.merge(self.indicator_data, ticker_data, how='inner', on='Date', suffixes=('Fng', 'Ticker'))
+        merged_data = pd.merge(self.indicator_data, ticker_data, how='inner', on='Date', suffixes=('FngIndicator', 'Ticker'))
 
         range1 = merged_data[merged_data['ValueFng'].between(0, 25, inclusive='left')]
         range2 = merged_data[merged_data['ValueFng'].between(25, 46, inclusive='left')]

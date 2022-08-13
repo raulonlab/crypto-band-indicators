@@ -50,7 +50,7 @@ def get_binance_ticker_time_series(binance_api_key:str, binance_secret_key:str, 
     return(coindata.reindex(columns =['date', key]))
 
 
-def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
     start_date = parse_any_date(start_date, datetime(2010, 1, 1))
 
     cached_data = None
@@ -105,7 +105,7 @@ def get_nasdaq_ticker_time_series(start_date: Union[str, date, datetime, None] =
     return all_data[all_data['Date'] >= start_date].reset_index(drop=True)
 
 
-def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+def get_fng_time_series(start_date: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
     start_date = parse_any_date(start_date, datetime(2010, 1, 1))
     
     cached_data = None

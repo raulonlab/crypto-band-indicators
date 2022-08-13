@@ -44,10 +44,17 @@ if __name__ == '__main__':
     # cerebro.broker.setcash(100000.0)    # default: 10k
 
     start_portfolio_value = cerebro.broker.getvalue()
-    cerebro.run()
-    end_portfolio_value = cerebro.broker.getvalue()
-    pnl = end_portfolio_value - start_portfolio_value
 
-    print(f'Starting Portfolio Value: {start_portfolio_value:2f}')
-    print(f'Final Portfolio Value: {end_portfolio_value:2f}')
-    print(f'PnL: {pnl:.2f}')
+    cerebro.run()
+
+    end_portfolio_value = cerebro.broker.getvalue()
+    pnl_value = end_portfolio_value - start_portfolio_value
+    pnl_percent = (pnl_value / start_portfolio_value) * 100
+    pnl_sign = '' if pnl_value < 0 else '+'
+
+    # print("----------------------------------------")
+    print(f"{'Start value:':<12} {start_portfolio_value:2f} USD")
+    print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
+    print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
+
+    cerebro.plot(volume=False) # iplot=False, style='bar' , stdstats=False

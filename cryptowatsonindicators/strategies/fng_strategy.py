@@ -1,15 +1,11 @@
 from datetime import timedelta
 import backtrader as bt
-from cryptowatsonindicators import Fng, datas, utils
+from cryptowatsonindicators import FngIndicator, utils
 
-class FngIndicator(bt.Indicator, Fng):
+class FngIndicatorWrapper(bt.Indicator, FngIndicator):
     lines = ('fng_value',)
 
-    params = (
-        ('ticker_symbol', 'BTCUSDT'),
-        ('weight_type', '')
-    )
-
+    params = (('ticker_symbol', 'BTCUSDT'), )
 
     def next(self):
         fng_value = self.get_fng_value(at_date=self.data.datetime.date())
@@ -29,7 +25,7 @@ class FngStrategy(bt.Strategy):
         buy_frequency_days=3,  # Number of days between buys
         weight_type="",        # Defined weight multiplier to buy_amount
         log=True,              # Enable log messages
-        debug=True,            # Enable debug messages
+        debug=False,            # Enable debug messages
     )
 
     def log(self, txt, price=None, dt=None, log_color=None):
@@ -58,7 +54,7 @@ class FngStrategy(bt.Strategy):
         self.log(txt=txt, price=price, dt=dt, log_color=log_color)
 
     def __init__(self):
-        self.fng = FngIndicator(self.data, weight_type=self.params.weight_type)
+        self.fng = FngIndicatorWrapper(self.data, weight_type=self.params.weight_type)
 
         self.price = self.datas[0].close
 
@@ -109,8 +105,6 @@ class FngStrategy(bt.Strategy):
 
         # Only buy every buy_frequency_days days
         if self.last_order_executed_at is not None and (self.data.datetime.date() - self.last_order_executed_at) < timedelta(self.params.buy_frequency_days):
-            # if self.position:
-            #     self.order = self.close()
             self.debug(f"  ...skip: still to soon to buy")
             return
 
@@ -121,7 +115,6 @@ class FngStrategy(bt.Strategy):
         self.log(
             f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, FnG: ({fng_info['fng_ordinal']}) {fng_info['name']}, BTC price: {self.price[0]:.4f}", log_color=utils.LogColors.BOLD)
 
-        # BUY and track current order
-        # price=self.price[0], size=buy_btc_size, exectype=bt.Order.Close,
+        # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)
 
