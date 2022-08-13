@@ -25,21 +25,27 @@ The Fear and Greed Index is a tool that helps investors and traders analyze the 
 
 ### Backtrading for backtesting
 - [Backtrader for backtesting @ algotrading101](https://algotrading101.com/learn/backtrader-for-backtesting/)
-- 
+- https://www.backtrader.com/docu/concepts/#before-starting
 
 ### Resources
 
 - [Part 1 - Using Python to Analyze Rainbow-Weighted Averaging — A More Profitable Frequency Investment Strategy](https://medium.com/coinmonks/using-python-to-analyze-rainbow-weighted-averaging-a-more-profitable-frequency-investment-12009a8c3617)
+
 - [Part 2 - Creating a Rainbow Weighted Average Trading bot with Python](https://blog.devgenius.io/creating-a-rainbow-weighted-average-trading-bot-with-python-99f13642a2c9)
     - Source code: https://github.com/Totesthegoats/rwa_bot
     - RWA strategy revisited: https://medium.com/@chris_42047/the-rainbow-weighted-average-strategy-revisited-afb02b45aead
     - Logarithmic (non-linear) regression - Bitcoin estimated value @ bitcointalk.org: https://bitcointalk.org/index.php?topic=831547
+
 - [Logarithmic Regression in Python (Step-by-Step)](https://www.statology.org/logarithmic-regression-python/) and [Logarithmic regression calculator](https://www.statology.org/logarithmic-regression-calculator/)
 
 - Fear and Greed Index API: https://alternative.me/crypto/fear-and-greed-index/#api
 
-- 
 - [What is a Walk-Forward Optimization and How to Run It?](https://algotrading101.com/learn/walk-forward-optimization/)
+
+- CahrtSchool: https://school.stockcharts.com/doku.php?id=technical_indicators
+
+- Portfolio analytics for quants, written in Python: https://github.com/ranaroussi/quantstats
+
 - using GitHub (or other providers) as a PyPy Server: https://www.freecodecamp.org/news/how-to-use-github-as-a-pypi-server-1c3b0d07db2
 
 - Run Jupyter notebooks online:

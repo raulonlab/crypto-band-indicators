@@ -2,11 +2,10 @@ from binance.client import Client
 from typing import Union
 from traceback import format_exc
 import pandas as pd
-import numpy as np
 import nasdaqdatalink
 from datetime import datetime, date, timedelta
 from .alternative import get_fng_history
-from .utils import parse_any_date
+from cryptowatsonindicators.utils import parse_any_date
 
 NASDAQ_CSV_CACHE_PATH = 'btcusdt_1d_nasdaq.csv'
 FNG_CSV_CACHE_PATH = 'fng_1d_alternative.csv'

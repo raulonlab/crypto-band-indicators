@@ -7,6 +7,7 @@ Nasdaq-Data-Link==1.0.2
 python-binance>=1.0.16
 matplotlib==3.5.2
 matplotlib-inline==0.1.3
+backtrader==1.9.76.123
 pytest==7.1.1
 pytest-runner==6.0.0
 setuptools>=60.5.0
@@ -16,3 +17,6 @@ wheel>=0.37.1
 # -e .
 # Include install_requires from setup.py
 # . 
+
+# backtrader patch: https://stackoverflow.com/a/67740176
+-e git+https://github.com/mementum/backtrader.git@0fa63ef4a35dc53cc7320813f8b15480c8f85517#egg=backtrader

@@ -21,6 +21,7 @@ setup(
         'python-binance',
         'matplotlib',
         'matplotlib-inline',
+        'backtrader',
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest==4.4.1'],

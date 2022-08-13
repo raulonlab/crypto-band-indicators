@@ -1,6 +1,24 @@
 from typing import Union
 from datetime import datetime, date, time
 
+class LogColors:
+    HEADER = '\033[95m'
+    BOLD = '\033[1m'
+    LIGHT = '\033[2m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+class Emojis:
+    MONEY = '💰'
+    BUY = '+'
+    SELL = '-'
+    OK = '✅'
+    FAIL = '❌'
+
 def parse_any_date(date_any: Union[str, date, None] = None, default_date: any = None) -> Union[datetime, any]:
     # parse and return date_any
     if date_any is None:

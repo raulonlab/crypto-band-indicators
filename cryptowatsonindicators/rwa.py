@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-from .helpers import data, utils
+from cryptowatsonindicators import datas, utils
 
 RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies", "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
 RAINBOW_BANDS_COLORS = ['#ff1716', '#e76a5e', '#ff852a', '#fec68b', '#fff48b', '#b0e072', '#63ce9c', '#36b1c6', '#276feb']
@@ -20,7 +20,7 @@ class Rwa:
         self.binance_secret_key = binance_secret_key
 
         # load data
-        self.data = data.get_nasdaq_ticker_time_series(start_date)
+        self.data = datas.get_nasdaq_ticker_time_series(start_date)
 
         if (self.data is None or self.data.empty):
             e = f"Rwa constructor: No historical data available"
@@ -146,8 +146,8 @@ class Rwa:
             'date': at_date_value,
             'price': price,
         }
-        band_info = Rwa._get_rainbow_band_info_by_index(band_index)
-        return {**query_info, **band_info}
+        rwa_info = Rwa._get_rainbow_info_by_index(band_index)
+        return {**query_info, **rwa_info}
 
 
     @classmethod
@@ -156,7 +156,7 @@ class Rwa:
 
 
     @classmethod
-    def _get_rainbow_band_info_by_index(cls, index: int = -1) -> dict:
+    def _get_rainbow_info_by_index(cls, index: int = -1) -> dict:
         if (index < 0 or index > len(RAINBOW_BANDS_NAMES)):
             return dict()
         
