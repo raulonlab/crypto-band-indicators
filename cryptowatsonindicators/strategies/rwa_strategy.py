@@ -2,6 +2,7 @@ from datetime import timedelta
 import backtrader as bt
 from cryptowatsonindicators import RwaIndicator, utils
 
+
 class RwaIndicatorWrapper(bt.Indicator, RwaIndicator):
     lines = ('band_index',)
 
@@ -10,10 +11,10 @@ class RwaIndicatorWrapper(bt.Indicator, RwaIndicator):
     def next(self):
         band_index = self.get_rainbow_band_index(
             price=self.data.close[0], at_date=self.data.datetime.date())
-        
+
         if not band_index:
             band_index = self.last_valid_band_index
-        
+
         self.lines.band_index[0] = int(band_index)
 
         self.last_valid_band_index = band_index
@@ -51,11 +52,12 @@ class RwaStrategy(bt.Strategy):
     def debug(self, txt, price=None, dt=None, log_color=utils.LogColors.LIGHT):
         if (self.params.debug != True):
             return
-        
+
         self.log(txt=txt, price=price, dt=dt, log_color=log_color)
 
     def __init__(self):
-        self.rwa = RwaIndicatorWrapper(self.data, weight_type=self.params.weight_type)
+        self.rwa = RwaIndicatorWrapper(
+            self.data, weight_type=self.params.weight_type)
 
         self.price = self.datas[0].close
 
@@ -122,5 +124,3 @@ class RwaStrategy(bt.Strategy):
 
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)
-
-

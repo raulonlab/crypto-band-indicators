@@ -22,7 +22,7 @@ data2 = bt.feeds.GenericCSVData(
     todate=datetime.datetime(2020, 1, 1),
     nullvalue=0.0,
     dtformat=('%Y-%m-%d'),
-    datetime=0, # uses the column 0 as datetime column
+    datetime=0,  # uses the column 0 as datetime column
     time=-1,
     high=-1,
     low=-1,
@@ -42,11 +42,11 @@ cerebro.broker.setcommission(commission=0.0025)
 
 if __name__ == '__main__':
 
-	start_portfolio_value = cerebro.broker.getvalue()
-	cerebro.run()
-	end_portfolio_value = cerebro.broker.getvalue()
-	pnl = end_portfolio_value - start_portfolio_value
+    start_portfolio_value = cerebro.broker.getvalue()
+    cerebro.run()
+    end_portfolio_value = cerebro.broker.getvalue()
+    pnl = end_portfolio_value - start_portfolio_value
 
-	print(f'Starting Portfolio Value: {start_portfolio_value:2f}')
-	print(f'Final Portfolio Value: {end_portfolio_value:2f}')
-	print(f'PnL: {pnl:.2f}')
+    print(f'Starting Portfolio Value: {start_portfolio_value:2f}')
+    print(f'Final Portfolio Value: {end_portfolio_value:2f}')
+    print(f'PnL: {pnl:.2f}')

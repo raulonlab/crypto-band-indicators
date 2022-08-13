@@ -1,5 +1,6 @@
 import backtrader as bt
 
+
 class BtcSentiment(bt.Strategy):
     params = (('period', 10), ('devfactor', 1),)
 

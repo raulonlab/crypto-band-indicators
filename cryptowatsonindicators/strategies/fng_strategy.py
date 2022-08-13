@@ -2,6 +2,7 @@ from datetime import timedelta
 import backtrader as bt
 from cryptowatsonindicators import FngIndicator, utils
 
+
 class FngIndicatorWrapper(bt.Indicator, FngIndicator):
     lines = ('fng_value',)
 
@@ -12,7 +13,7 @@ class FngIndicatorWrapper(bt.Indicator, FngIndicator):
 
         if not fng_value:
             fng_value = self.last_valid_fng_value
-        
+
         self.lines.fng_value[0] = int(fng_value)
 
         self.last_valid_fng_value = fng_value
@@ -50,11 +51,12 @@ class FngStrategy(bt.Strategy):
     def debug(self, txt, price=None, dt=None, log_color=utils.LogColors.LIGHT):
         if (self.params.debug != True):
             return
-        
+
         self.log(txt=txt, price=price, dt=dt, log_color=log_color)
 
     def __init__(self):
-        self.fng = FngIndicatorWrapper(self.data, weight_type=self.params.weight_type)
+        self.fng = FngIndicatorWrapper(
+            self.data, weight_type=self.params.weight_type)
 
         self.price = self.datas[0].close
 
@@ -117,4 +119,3 @@ class FngStrategy(bt.Strategy):
 
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)
-

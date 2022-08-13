@@ -11,7 +11,7 @@ if __name__ == '__main__':
     cerebro = bt.Cerebro(stdstats=False)
 
     cerebro.addstrategy(strategies.FngStrategy, buy_amount=buy_amount,
-                    buy_frequency_days=buy_frequency_days, weight_type=weight_type, debug=False)
+                        buy_frequency_days=buy_frequency_days, weight_type=weight_type, debug=False)
 
     # Get data feed
     ticker_data = datas.get_nasdaq_ticker_time_series(start_date=start_date)
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # cerebro.broker.setcash(100000.0)    # default: 10k
 
     start_portfolio_value = cerebro.broker.getvalue()
-    
+
     cerebro.run()
 
     end_portfolio_value = cerebro.broker.getvalue()
@@ -47,4 +47,4 @@ if __name__ == '__main__':
     print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
     print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
 
-    cerebro.plot(volume=False) # iplot=False, style='bar' , stdstats=False
+    cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False

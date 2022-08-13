@@ -57,4 +57,4 @@ if __name__ == '__main__':
     print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
     print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
 
-    cerebro.plot(volume=False) # iplot=False, style='bar' , stdstats=False
+    cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
