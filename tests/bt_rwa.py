@@ -1,44 +1,75 @@
 import backtrader as bt
-from cryptowatsonindicators import strategies, datas
+from cryptowatsonindicators import strategies, datas, RwaIndicator
+import pprint
+pprint = pprint.PrettyPrinter(
+    indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
 
-start_date = '01/01/2020'    # start date of the simulation
-buy_frequency = 7            # Number of days between purchases
+# Global variables
+ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
+start_date = '01/01/2021'    # start date of the simulation
+buy_frequency_days = 5       # Number of days between purchases
 buy_amount = 100             # Amount purchased in standard DCA
 weight_type = "fibs"         # "fibs" or "originaldca"
+# use your binance keys or leave blank to use Binance's testnet
+binance_api_key = ''
+binance_secret_key = ''
 
-# Create a cerebro entity
-cerebro = bt.Cerebro(stdstats=False)
+# Enable / diable parts to bo tested
+run_get_value_test = True
+run_plot_test = True
+run_backtrader_test = True
 
-# Add RWA strategy
-# params:
-# buy_amount = 100,       # Amount purchased in standard DCA
-# buy_frequency_days = 3, # Number of days between buys
-# weight_type = "fibs",    # "fibs" or "original"
-# debug = True,            # Enable debug messages
-cerebro.addstrategy(strategies.RwaStrategy, buy_amount=100,
-                    buy_frequency_days=3, weight_type="fibs", debug=False)
+# Limit indicator series to start at specific date or None to use all the history
+indicator_start_date = None
+rwa = RwaIndicator(indicator_start_date, ticker_symbol,
+                   binance_api_key, binance_secret_key)
 
-# Get data
-ticker_data = datas.get_nasdaq_ticker_time_series()
 
-# Get only the n last tickers
-ticker_data_filtered = ticker_data.tail(30)
-# print('ticker_data_filtered: \n', ticker_data_filtered)
+def get_value_test():
+    # Get Current Rainbow band
+    band_index = rwa.get_current_rainbow_band_index()
+    rainbow_info = RwaIndicator._get_rainbow_info_by_index(band_index)
+    print('Current Rainbow Band:')
+    pprint(rainbow_info)
 
-if __name__ == '__main__':
-    data = bt.feeds.PandasData(
-        dataname=ticker_data_filtered,
+    # Get Rainbow band at date
+    at_date = '01/02/2021'    # date when look up the Fng
+    price_at_date = 30000     # Price of BTC at date
+
+    band_index = rwa.get_rainbow_band_index(
+        price=price_at_date, at_date=at_date)
+    rainbow_info = RwaIndicator._get_rainbow_info_by_index(band_index)
+    print(f"Rainbow Band at {at_date}:")
+    pprint(rainbow_info)
+
+
+def plot_test():
+    rwa.plot_rainbow()
+
+
+def backtrader_test():
+    # Create a cerebro entity
+    cerebro = bt.Cerebro(stdstats=False)
+
+    cerebro.addstrategy(strategies.RwaStrategy, buy_amount=buy_amount,
+                        buy_frequency_days=buy_frequency_days, weight_type=weight_type, log=True, debug=False)
+
+    # Get data feed
+    ticker_data = datas.get_nasdaq_ticker_time_series(start_date=start_date)
+
+    ticker_data_feed = bt.feeds.PandasData(
+        dataname=ticker_data,
         datetime=0,
         high=None,
         low=None,
-        open=1,
+        open=1,     # uses the column 1 ('Value') as open price
         close=1,    # uses the column 1 ('Value') as close price
         volume=None,
         openinterest=None,
     )
 
     # Add the Data Feed to Cerebro
-    cerebro.adddata(data)
+    cerebro.adddata(ticker_data_feed)
 
     # Add cash to the virtual broker
     # cerebro.broker.setcash(100000.0)    # default: 10k
@@ -58,3 +89,12 @@ if __name__ == '__main__':
     print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
 
     cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
+
+
+if __name__ == '__main__':
+    if run_get_value_test == True:
+        get_value_test()
+    if run_plot_test == True:
+        plot_test()
+    if run_backtrader_test:
+        backtrader_test()
