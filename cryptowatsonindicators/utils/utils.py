@@ -5,7 +5,13 @@ from datetime import datetime, date, time
 class LogColors:
     HEADER = '\033[95m'
     BOLD = '\033[1m'
-    LIGHT = '\033[2m'
+    DEBUG = '\033[2m'
+    BUY = '\033[92m'
+    SELL = '\033[93m'
+    BOLDBUY = '\033[1m\033[92m'
+    BOLDSELL = '\033[1m\033[93m'
+
+    # Other colors
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
     OKGREEN = '\033[92m'
@@ -15,11 +21,14 @@ class LogColors:
 
 
 class Emojis:
-    MONEY = '💰'
-    BUY = '+'
-    SELL = '-'
-    OK = '✅'
-    FAIL = '❌'
+    MONEY = '$'     # 💰
+    BITCOIN = '₿'
+    UP = '▲'        # △
+    DOWN = '▼'      # ▽
+    BUY = 'B'          # 🅱 🅑 Ⓑ 🍀 👍
+    SELL = 'S'         # 🆂 🅢 Ⓢ 🚫 👎 🫳🏼
+    OK = '✔' # '✓'
+    FAIL = '✘' # '𐄂'
 
 
 def parse_any_date(date_any: Union[str, date, None] = None, default_date: any = None) -> Union[datetime, any]:

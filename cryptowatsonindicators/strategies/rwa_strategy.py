@@ -23,8 +23,8 @@ class RwaIndicatorWrapper(bt.Indicator, RwaIndicator):
 class RwaStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
-        buy_amount=100,        # Amount purchased in standard DCA
-        buy_frequency_days=3,  # Number of days between buys
+        weighted_buy_amount=100,        # Amount purchased in standard DCA
+        min_order_period=3,  # Number of days between buys
         weight_type="fibs",    # "fibs" or "original"
         log=True,              # Enable log messages
         debug=False,            # Enable debug messages
@@ -49,7 +49,7 @@ class RwaStrategy(bt.Strategy):
 
         print(''.join(log_parts))
 
-    def debug(self, txt, price=None, dt=None, log_color=utils.LogColors.LIGHT):
+    def debug(self, txt, price=None, dt=None, log_color=utils.LogColors.DEBUG):
         if (self.params.debug != True):
             return
 
@@ -106,8 +106,8 @@ class RwaStrategy(bt.Strategy):
             self.debug(f"  ...skip: order in progress")
             return
 
-        # Only buy every buy_frequency_days days
-        if self.last_order_executed_at is not None and (self.data.datetime.date() - self.last_order_executed_at) < timedelta(self.params.buy_frequency_days):
+        # Only buy every min_order_period days
+        if self.last_order_executed_at is not None and (self.data.datetime.date() - self.last_order_executed_at) < timedelta(self.params.min_order_period):
             self.debug(f"  ...skip: still to soon to buy")
             return
 
@@ -117,7 +117,7 @@ class RwaStrategy(bt.Strategy):
         if (self.params.weight_type == 'fibs'):
             multiplier = rwa_info['fibs_multiplier']
 
-        buy_dol_size = self.params.buy_amount * multiplier
+        buy_dol_size = self.params.weighted_buy_amount * multiplier
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
             f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Band: ({rwa_info['band_ordinal']}) {rwa_info['name']}, BTC price: {self.price[0]:.4f}", log_color=utils.LogColors.BOLD)

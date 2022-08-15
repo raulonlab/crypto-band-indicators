@@ -7,8 +7,8 @@ pprint = pprint.PrettyPrinter(
 # Global variables
 ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
 start_date = '01/01/2021'    # start date of the simulation
-buy_frequency_days = 5       # Number of days between purchases
-buy_amount = 100             # Amount purchased in standard DCA
+min_order_period = 5       # Number of days between purchases
+weighted_buy_amount = 100             # Amount purchased in standard DCA
 weight_type = "fibs"         # "fibs" or "originaldca"
 # use your binance keys or leave blank to use Binance's testnet
 binance_api_key = ''
@@ -51,8 +51,8 @@ def backtrader_test():
     # Create a cerebro entity
     cerebro = bt.Cerebro(stdstats=False)
 
-    cerebro.addstrategy(strategies.RwaStrategy, buy_amount=buy_amount,
-                        buy_frequency_days=buy_frequency_days, weight_type=weight_type, log=True, debug=False)
+    cerebro.addstrategy(strategies.RwaStrategy, weighted_buy_amount=weighted_buy_amount,
+                        min_order_period=min_order_period, weight_type=weight_type, log=True, debug=False)
 
     # Get data feed
     ticker_data = datas.get_nasdaq_ticker_time_series(start_date=start_date)
@@ -88,7 +88,7 @@ def backtrader_test():
     print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
     print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
 
-    cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
+    # cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
 
 
 if __name__ == '__main__':
