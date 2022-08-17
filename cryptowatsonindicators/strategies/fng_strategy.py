@@ -92,8 +92,7 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
     def __init__(self):
         # Indicators
         self.fng_value = self.data1.close
-        # self.fng_av = bt.indicators.WeightedAverage(self.data1, period = self.params.min_order_period)
-        self.fng_ma = bt.indicators.WeightedMovingAverage(self.data1, period = self.params.min_order_period)
+        self.fng_ma = bt.indicators.WeightedMovingAverage(self.data1, period = self.params.min_order_period, subplot=False)
 
         self.price = self.data.close
 
@@ -124,14 +123,7 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
             self.debug(f"  ...skip: still to soon to buy")
             return
 
-        # Print last n days fng and ma
-        # print(f"\n-- {self.data.datetime.date()} ----------------")
-        # for i in range(-1 * (self.params.min_order_period - 1), 0):
-        #     previous_fng_info = FngIndicator._get_fng_value_details(int(self.fng_value[i]))
-        #     print(f"{i:<2}: value: {self.fng_value[i]:<3}, index: {previous_fng_info.get('fng_index')}")
-
-        
-        # Option 1: Rebalance if the the MA (of period min_order_period) and current fng is major than previous reblance fng
+        # Rebalance if the the MA (of period min_order_period) and current fng is major than previous reblance fng
         fng_info = FngIndicator._get_fng_value_details(
             int(self.fng_value[0]))
         # print(f"0 : value: {self.fng_value[0]:<3}, index: {fng_info.get('fng_index')}")
@@ -144,10 +136,6 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
             self.log(
                 f"R REBALANCE. Current FnG: ({fng_info['fng_ordinal']}) {fng_info['name']}, Previous FnG: ({last_bar_executed_fng_info['fng_ordinal']}) {last_bar_executed_fng_info['name']}", log_color=utils.LogColors.OKCYAN)
             self.rebalance(self.params.rebalance_percents[fng_info.get('fng_index')])
-
-        # Option 2: Rebalance if the average index in the last min_order_period changes
-        # ...
-
 
 
     def rebalance(self, percent: float):

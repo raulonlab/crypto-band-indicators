@@ -172,4 +172,4 @@ class RwaIndicator:
         # Show plot
         plt.rcParams['figure.dpi'] = 600
         plt.rcParams['savefig.dpi'] = 600
-        plt.show()
+        plt.show(block=False)

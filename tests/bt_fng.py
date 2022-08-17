@@ -7,10 +7,10 @@ pprint = pprint.PrettyPrinter(
 # Global variables
 strategy             = "weighted_dca"    # Select strategy between "weighted_dca" and "rebalance"
 ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
-start_date           = '01/12/2021'   # start date of the simulation. Ex: '01/08/2020' or None
-end_date             = None           # end date of the simulation. Ex: '01/08/2020' or None
+start                = '01/03/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
 initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
-min_order_period     = 5              # Minimum period in days to place orders
+min_order_period     = 7              # Minimum period in days to place orders
 weighted_buy_amount  = 100            # Amount purchased in standard DCA
 weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rebalance_percents   = [85, 65, 50, 15, 10]         # rebalance percentages for each index
@@ -24,10 +24,13 @@ run_get_value_test = False
 run_plot_test = False
 run_backtrader_test = True
 
-# Limit indicator series to start at specific date or None to use all the history
-indicator_start_date = None
-fng = FngIndicator(indicator_start_date, ticker_symbol)
+# Data loader
+data_loader = datas.DataLoader(start = start, end = end)\
+        .load_data('ticker_nasdaq') \
+        .load_data('fng')
 
+# Fng Indicator with 'fng' data
+fng = FngIndicator(data_loader.to_dataframe('fng'), ticker_symbol = ticker_symbol)
 
 def get_value_test():
     # Get Current Fear and Greed index
@@ -46,7 +49,8 @@ def get_value_test():
 
 
 def plot_test():
-    fng.plot_fng_and_ticker_price()
+    fng.plot_fng_and_ticker_price(ticker_data=data_loader.to_dataframe('ticker_nasdaq'))
+    # fng.plot_fng()
 
 
 def backtrader_test():
@@ -64,38 +68,9 @@ def backtrader_test():
         return
 
     # Get data feed
-    ticker_data = datas.get_nasdaq_ticker_time_series(start_date=start_date)
-    fng_data = datas.get_fng_time_series(start_date=start_date)
-
-    # Resample data series
-    ticker_data, fng_data = datas.resample_time_series(ticker_data, fng_data, date_column_name='Date', start_date=start_date, end_date=end_date)
-
-    # print('ticker_data: \n', ticker_data.tail())
-    # print('fng_data: \n', fng_data.tail())
-    # return
-
-    ticker_data_feed = bt.feeds.PandasData(
-        dataname=ticker_data,
-        datetime=list(ticker_data.columns).index("Date"),
-        high=None,
-        low=None,
-        open=list(ticker_data.columns).index("Value"),     # uses the column 1 ('Value') as open price
-        close=list(ticker_data.columns).index("Value"),    # uses the column 1 ('Value') as close price
-        volume=None,
-        openinterest=None,
-    )
-
-    fng_data_feed = bt.feeds.PandasData(
-        dataname=fng_data,
-        datetime=list(fng_data.columns).index("Date"),
-        high=None,
-        low=None,
-        open=None,
-        close=list(fng_data.columns).index("Value"),    # uses the column 1 ('Value') as close price
-        volume=None,
-        openinterest=None,
-    )
-
+    ticker_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq')
+    fng_data_feed =  data_loader.to_backtrade_feed('fng')
+    
     # Add the data to Cerebro
     cerebro.adddata(ticker_data_feed)
     cerebro.adddata(fng_data_feed)
@@ -107,21 +82,37 @@ def backtrader_test():
 
     cerebro.run()
 
-    position = cerebro.getbroker().getposition(data=ticker_data_feed)
-    print('position: ', position.size, ' ', position.price)
-    end_position_value = position.size * position.price
-    end_portfolio_value = cerebro.broker.getvalue() + end_position_value
+    end_portfolio_value = cerebro.broker.getvalue()     # Value in USDT
+    pnl_portfolio_value = end_portfolio_value - start_portfolio_value
+
+    position = cerebro.getbroker().getposition(data=ticker_data_feed)   # position: size: BTC in portfolio, price: average BTC purchase price
+    start_btc_price, end_btc_price = data_loader.get_value_start_end(label = 'ticker_nasdaq')
+
+    # btc price and PnL at start
+    start_pnl_value = pnl_portfolio_value + (position.size * start_btc_price)
+    start_pnl_percent = (start_pnl_value / start_portfolio_value) * 100
+    start_pnl_sign = '' if start_pnl_value < 0 else '+'
+
+    # btc price and PnL at the end
+    end_pnl_value = pnl_portfolio_value + (position.size * end_btc_price)
+    end_pnl_percent = (end_pnl_value / start_portfolio_value) * 100
+    end_pnl_sign = '' if end_pnl_value < 0 else '+'
+
+    # btc price and PnL at the end
+    avg_btc_price = position.price
+    avg_pnl_value = pnl_portfolio_value + (position.size * avg_btc_price)
+    avg_pnl_percent = (avg_pnl_value / start_portfolio_value) * 100
+    avg_pnl_sign = '' if avg_pnl_value < 0 else '+'
     
-    pnl_value = end_portfolio_value - start_portfolio_value
-    pnl_percent = (pnl_value / start_portfolio_value) * 100
-    pnl_sign = '' if pnl_value < 0 else '+'
+    print("\nSIMULATION RESULT")
+    print("------------------------")
+    print(f"{'Started:':<12} {start_portfolio_value:<.2f} USD")
+    print(f"{'Ended:':<12} {end_portfolio_value:<.2f} USD, {position.size:6f} BTC")
+    print(f"{'PnL:':<12} {end_pnl_sign}{end_pnl_value:.2f} USD ({end_pnl_sign}{end_pnl_percent:.2f}%) at the latest price of {end_btc_price:.4f} USD")
+    print(f"{'PnL:':<12} {avg_pnl_sign}{avg_pnl_value:.2f} USD ({avg_pnl_sign}{avg_pnl_percent:.2f}%) on average price of {avg_btc_price:.4f} USD")
+    print(f"{'PnL:':<12} {start_pnl_sign}{start_pnl_value:.2f} USD ({start_pnl_sign}{start_pnl_percent:.2f}%) at the initial price of {start_btc_price:.4f} USD")
 
-    # print("----------------------------------------")
-    print(f"{'Start value:':<12} {start_portfolio_value:2f} USD")
-    print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
-    print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
-
-    # cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
+    cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
 
 
 if __name__ == '__main__':

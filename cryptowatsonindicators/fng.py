@@ -20,14 +20,16 @@ FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
 
 class FngIndicator:
-    def __init__(self, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
+    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None]  = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
 
         # load indicator data
-        self.indicator_data = datas.get_fng_time_series(
-            start_date=indicator_start_date)
+        if isinstance(data, pd.DataFrame):
+            self.indicator_data = data
+        else:
+            self.indicator_data = datas.DataLoader(start = indicator_start_date).load_data('fng').to_dataframe()
 
         if (self.indicator_data is None or self.indicator_data.empty):
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -42,30 +44,23 @@ class FngIndicator:
             print(f"[warn] FngIndicator.get_fng_value: No indicator data available")
             return None
 
-        at_date_index = -1
-        at_date_value = date.today()
-        if at_date:
-            at_date_value = utils.parse_any_date(
-                at_date, datetime.now()).date()
-            at_date_pd = pd.Timestamp(at_date_value)
+        at_date = utils.parse_any_date(at_date)
+        if not at_date:
+            at_date = self.indicator_data.index.max().date()
+        
+        fng_at_serie = self.indicator_data[self.indicator_data.index == pd.to_datetime(at_date)]
+        if (fng_at_serie.empty):
+            print(f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date}")
+            return None
+        
+        fng_at_value = int(fng_at_serie['close'])
 
-            # find fitted_data index at date
-            at_date_index_list = list(
-                self.indicator_data[self.indicator_data['Date'] == at_date_pd].index)
-            if (len(at_date_index_list) == 0):
-                print(
-                    f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date_value}")
-                return None
+        return fng_at_value
 
-            at_date_index = int(at_date_index_list[0])
-
-        fng_data = self.indicator_data.iloc[at_date_index].to_dict()
-
-        return int(fng_data.get('Value'))
 
     @classmethod
     def _get_fng_value_details(cls, value: int = -1) -> dict:
-        if (value < 0 or value > 100):
+        if (value is None or value < 0 or value > 100):
             return dict()
 
         # Get index
@@ -97,26 +92,26 @@ class FngIndicator:
         fig, axes = plt.subplots()
 
         # Consider using pivot(): https://pandas.pydata.org/pandas-docs/dev/getting_started/intro_tutorials/09_timeseries.html#datetime-as-index
-        range1 = self.indicator_data[self.indicator_data['Value'].between(
+        range1 = self.indicator_data[self.indicator_data['close'].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data['Value'].between(
+        range2 = self.indicator_data[self.indicator_data['close'].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data['Value'].between(
+        range3 = self.indicator_data[self.indicator_data['close'].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data['Value'].between(
+        range4 = self.indicator_data[self.indicator_data['close'].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data['Value'].between(
+        range5 = self.indicator_data[self.indicator_data['close'].between(
             75, 100, inclusive='right')]
 
-        axes.bar(range1['Date'], range1['Value'],
+        axes.bar(range1.index, range1['close'],
                  color='#C05840')  # , width, yerr=menStd
-        axes.bar(range2['Date'], range2['Value'],
+        axes.bar(range2.index, range2['close'],
                  color='#FC9A24')  # , width, yerr=menStd
-        axes.bar(range3['Date'], range3['Value'],
+        axes.bar(range3.index, range3['close'],
                  color='#E5C769')  # , width, yerr=menStd
-        axes.bar(range4['Date'], range4['Value'],
+        axes.bar(range4.index, range4['close'],
                  color='#B4E168')  # , width, yerr=menStd
-        axes.bar(range5['Date'], range5['Value'],
+        axes.bar(range5.index, range5['close'],
                  color='#5CBC3C')  # , width, yerr=menStd
 
         # ax.axhline(0, color='grey', linewidth=0.8)
@@ -125,12 +120,14 @@ class FngIndicator:
         axes.set_title('Fear and Greed history')
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        data_length = len(self.indicator_data)
-        xticks = self.indicator_data['Date'].iloc[lambda x: x.index % int(
-            data_length/20) == 0].tolist()
-        xticks[0] = self.indicator_data['Date'].iloc[0]
-        xticks[-1] = self.indicator_data['Date'].iloc[-1]
-        axes.set_xticks(xticks)
+        
+        # Get index positions for xticks
+        fng_data_length = len(self.indicator_data)
+        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks[0] = self.indicator_data.index.min()
+        fng_xticks[-1] = self.indicator_data.index.max()
+        
+        axes.set_xticks(fng_xticks)
         plt.xticks(fontsize=8, rotation=45, ha='right')
 
         # Label with label_type 'center' instead of the default 'edge'
@@ -142,19 +139,16 @@ class FngIndicator:
         plt.rcParams['figure.dpi'] = 600
         plt.rcParams['savefig.dpi'] = 600
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.show()
+        plt.show(block=False)
 
-    def plot_fng_and_ticker_price(self):
+    def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
         if (self.indicator_data is None or self.indicator_data.empty):
             print(
                 f"[warn] FngIndicator.plot_fng_and_ticker_price: No indicator data available")
             return None
 
-        ticker_start_date = self.indicator_data['Date'][0]
-        ticker_data = datas.get_nasdaq_ticker_time_series(
-            start_date=ticker_start_date)
         if (ticker_data is None or ticker_data.empty):
-            print(f"[warn] plot_fng_and_ticker_price: No ticker data available")
+            print(f"[warn] plot_fng_and_ticker_price: No data available in ticker_data")
             return None
 
         fig, axes = plt.subplots()
@@ -165,46 +159,48 @@ class FngIndicator:
         plt.yticks(fontsize='small')
 
         # fng chart ########
-        range1 = self.indicator_data[self.indicator_data['Value'].between(
+        range1 = self.indicator_data[self.indicator_data['close'].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data['Value'].between(
+        range2 = self.indicator_data[self.indicator_data['close'].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data['Value'].between(
+        range3 = self.indicator_data[self.indicator_data['close'].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data['Value'].between(
+        range4 = self.indicator_data[self.indicator_data['close'].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data['Value'].between(
+        range5 = self.indicator_data[self.indicator_data['close'].between(
             75, 100, inclusive='right')]
 
-        axes.bar(range1['Date'], range1['Value'],
+        axes.bar(range1.index, range1['close'],
                  color='#C05840')  # , width, yerr=menStd
-        axes.bar(range2['Date'], range2['Value'],
+        axes.bar(range2.index, range2['close'],
                  color='#FC9A24')  # , width, yerr=menStd
-        axes.bar(range3['Date'], range3['Value'],
+        axes.bar(range3.index, range3['close'],
                  color='#E5C769')  # , width, yerr=menStd
-        axes.bar(range4['Date'], range4['Value'],
+        axes.bar(range4.index, range4['close'],
                  color='#B4E168')  # , width, yerr=menStd
-        axes.bar(range5['Date'], range5['Value'],
+        axes.bar(range5.index, range5['close'],
                  color='#5CBC3C')  # , width, yerr=menStd
 
         # fng ticks
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+        # Get index positions for xticks
         fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data['Date'].iloc[lambda x: x.index % int(
-            fng_data_length/20) == 0].tolist()
-        fng_xticks[0] = self.indicator_data['Date'].iloc[0]
-        fng_xticks[-1] = self.indicator_data['Date'].iloc[-1]
+        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks[0] = self.indicator_data.index.min()
+        fng_xticks[-1] = self.indicator_data.index.max()
+
         axes.set_xticks(fng_xticks)
         axes.set_yticks([0, 25, 46, 54, 75, 100])
 
         # ticker chart ##########
         axes2 = axes.twinx()
         axes2.set_ylabel('Price', fontsize='medium')
-        axes2.plot(ticker_data['Date'], ticker_data['Value'],
+        axes2.plot(ticker_data.index, ticker_data['close'],
                    color='#333333', linewidth=0.75)
 
         # ticker ticks
-        ticker_max_value = ticker_data['Value'].max()
+        ticker_max_value = ticker_data['close'].max()
         ticker_yticks = np.arange(
             0, int(ticker_max_value), int(ticker_max_value / 10))
         ticker_yticks[0] = 0
@@ -222,7 +218,7 @@ class FngIndicator:
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
         # fig.subplots_adjust(hspace=0.2)
         plt.tight_layout()
-        plt.show()
+        plt.show(block=False)
 
     def plot_fng_and_ticker_price_2(self):
         if (self.indicator_data is None or self.indicator_data.empty):
@@ -230,7 +226,7 @@ class FngIndicator:
                 f"[warn] FngIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
 
-        ticker_start_date = self.indicator_data['Date'][0]
+        ticker_start_date = self.indicator_data.index[0]
         ticker_data = datas.get_nasdaq_ticker_time_series(
             start_date=ticker_start_date)
         if (ticker_data is None or ticker_data.empty):
@@ -263,41 +259,40 @@ class FngIndicator:
         range5 = merged_data[merged_data['ValueFng'].between(
             75, 100, inclusive='right')]
 
-        fng_axes.bar(range1['Date'], range1['ValueFng'],
+        fng_axes.bar(range1.index, range1['ValueFng'],
                      color='#C05840')  # , width, yerr=menStd
-        fng_axes.bar(range2['Date'], range2['ValueFng'],
+        fng_axes.bar(range2.index, range2['ValueFng'],
                      color='#FC9A24')  # , width, yerr=menStd
-        fng_axes.bar(range3['Date'], range3['ValueFng'],
+        fng_axes.bar(range3.index, range3['ValueFng'],
                      color='#E5C769')  # , width, yerr=menStd
-        fng_axes.bar(range4['Date'], range4['ValueFng'],
+        fng_axes.bar(range4.index, range4['ValueFng'],
                      color='#B4E168')  # , width, yerr=menStd
-        fng_axes.bar(range5['Date'], range5['ValueFng'],
+        fng_axes.bar(range5.index, range5['ValueFng'],
                      color='#5CBC3C')  # , width, yerr=menStd
 
         # fng ticks
         fng_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data['Date'].iloc[lambda x: x.index % int(
-            fng_data_length/20) == 0].tolist()
-        fng_xticks[0] = self.indicator_data['Date'].iloc[0]
-        fng_xticks[-1] = self.indicator_data['Date'].iloc[-1]
+        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks[0] = self.indicator_data.index.min()
+        fng_xticks[-1] = self.indicator_data.index.max()
         fng_axes.set_xticks(fng_xticks)
         fng_axes.set_yticks([0, 25, 46, 54, 75, 100])
 
         # ticker chart ##########
-        ticker_axes.bar(range1['Date'], range1['ValueTicker'],
+        ticker_axes.bar(range1.index, range1['ValueTicker'],
                         color='#C05840')  # , width, yerr=menStd
-        ticker_axes.bar(range2['Date'], range2['ValueTicker'],
+        ticker_axes.bar(range2.index, range2['ValueTicker'],
                         color='#FC9A24')  # , width, yerr=menStd
-        ticker_axes.bar(range3['Date'], range3['ValueTicker'],
+        ticker_axes.bar(range3.index, range3['ValueTicker'],
                         color='#E5C769')  # , width, yerr=menStd
-        ticker_axes.bar(range4['Date'], range4['ValueTicker'],
+        ticker_axes.bar(range4.index, range4['ValueTicker'],
                         color='#B4E168')  # , width, yerr=menStd
-        ticker_axes.bar(range5['Date'], range5['ValueTicker'],
+        ticker_axes.bar(range5.index, range5['ValueTicker'],
                         color='#5CBC3C')  # , width, yerr=menStd
 
         # ticker ticks
-        ticker_max_value = ticker_data['Value'].max()
+        ticker_max_value = ticker_data['close'].max()
         ticker_yticks = np.arange(
             0, int(ticker_max_value), int(ticker_max_value / 10))
         ticker_yticks[0] = 0
@@ -325,4 +320,4 @@ class FngIndicator:
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
         # fig.subplots_adjust(hspace=0.2)
         plt.tight_layout()
-        plt.show()
+        plt.show(block=False)

@@ -1,33 +1,36 @@
 .DEFAULT_GOAL := help
 .PHONY: clean build help
 
+VENV_NAME=venv_cryptowatson-indicators
+
 venv: venv/touchfile
 
 venv/touchfile: requirements.txt
-	test -d venv || python3 -m venv venv
-	. venv/bin/activate; pip3 install -Ur requirements.txt
-	touch venv/touchfile
+	test -d ${VENV_NAME} || python3 -m venv ${VENV_NAME}
+	. ${VENV_NAME}/bin/activate; pip3 install -Ur requirements.txt
+	touch ${VENV_NAME}/touchfile
 
 ### activate environment, install requirements and local package (.)
 install: venv
-	. venv/bin/activate; pip3 install -e .
+	. ${VENV_NAME}/bin/activate; pip3 install -e .
 
 ### activate environment, install requirements an install ipython kernel in venv
 install-ipython-kernel: venv
-	ipython kernel install --user --name=venv
+#	. ${VENV_NAME}/bin/activate; ipython kernel install --user --name=venv
+	. ${VENV_NAME}/bin/activate; python3 -m ipykernel install --user --name=venv
 
 ### activate environment, install requirements and run tests
 test: venv
-	. venv/bin/activate; python3 setup.py pytest
+	. ${VENV_NAME}/bin/activate; python3 setup.py pytest
 
 ### activate environment, install requirements and build package
 build: venv
-	. venv/bin/activate; python3 setup.py bdist_wheel
+	. ${VENV_NAME}/bin/activate; python3 setup.py bdist_wheel
 
 ### Clean logs and resources
 clean:
 	rm -r ./logs/*
-	rm -rf venv
+	rm -rf ${VENV_NAME}
 
 # show help: Renders automatically categories (##) and targets (###). Regular comments (#) ignored
 # Based on: https://gist.github.com/prwhite/8168133?permalink_comment_id=2278355#gistcomment-2278355
