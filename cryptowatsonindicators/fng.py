@@ -29,7 +29,7 @@ class FngIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.DataLoader(start = indicator_start_date).load_data('fng').to_dataframe()
+            self.indicator_data = datas.DataLoader().load_data('fng').to_dataframe(start = indicator_start_date)
 
         if (self.indicator_data is None or self.indicator_data.empty):
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -121,7 +121,7 @@ class FngIndicator:
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         
-        # Get index positions for xticks
+        # Set xticks
         fng_data_length = len(self.indicator_data)
         fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
         fng_xticks[0] = self.indicator_data.index.min()
@@ -139,7 +139,7 @@ class FngIndicator:
         plt.rcParams['figure.dpi'] = 600
         plt.rcParams['savefig.dpi'] = 600
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.show(block=False)
+        plt.show()
 
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
         if (self.indicator_data is None or self.indicator_data.empty):
@@ -218,7 +218,7 @@ class FngIndicator:
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
         # fig.subplots_adjust(hspace=0.2)
         plt.tight_layout()
-        plt.show(block=False)
+        plt.show()
 
     def plot_fng_and_ticker_price_2(self):
         if (self.indicator_data is None or self.indicator_data.empty):
@@ -320,4 +320,4 @@ class FngIndicator:
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
         # fig.subplots_adjust(hspace=0.2)
         plt.tight_layout()
-        plt.show(block=False)
+        plt.show()

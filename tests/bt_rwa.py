@@ -5,24 +5,33 @@ pprint = pprint.PrettyPrinter(
     indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
 
 # Global variables
-ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
-start_date = '01/01/2021'    # start date of the simulation
-min_order_period = 5       # Number of days between purchases
-weighted_buy_amount = 100             # Amount purchased in standard DCA
-weight_type = "fibs"         # "fibs" or "originaldca"
-# use your binance keys or leave blank to use Binance's testnet
-binance_api_key = ''
-binance_secret_key = ''
+strategy             = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
+ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
+start                = '01/01/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
+initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
+min_order_period     = 5              # Minimum period in days to place orders
+weighted_buy_amount  = 100            # Amount purchased in standard DCA
+# weighted_multipliers = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]      # Default order amount multipliers (weighted) for each index
+weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]    # Fibonacci order amount multipliers (weighted) for each index
+rebalance_percents   = [10, 20, 30, 40, 50, 60, 70, 80, 90]         # rebalance percentages for each index
+
+# logging
+log=True
+debug=False
 
 # Enable / diable parts to bo tested
 run_get_value_test = True
 run_plot_test = True
 run_backtrader_test = True
+run_plot_backtrader_result_test = True
+
+# Data loader
+data_loader = datas.DataLoader().load_data('ticker_nasdaq')
 
 # Limit indicator series to start at specific date or None to use all the history
 indicator_start_date = None
-rwa = RwaIndicator(indicator_start_date, ticker_symbol,
-                   binance_api_key, binance_secret_key)
+rwa = RwaIndicator(data_loader.to_dataframe('ticker_nasdaq'))
 
 
 def get_value_test():
@@ -51,44 +60,63 @@ def backtrader_test():
     # Create a cerebro entity
     cerebro = bt.Cerebro(stdstats=False)
 
-    cerebro.addstrategy(strategies.RwaStrategy, weighted_buy_amount=weighted_buy_amount,
-                        min_order_period=min_order_period, weight_type=weight_type, log=True, debug=False)
+    if strategy == "weighted_dca":
+        cerebro.addstrategy(strategies.RwaWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
+                        min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
+    elif strategy == "rebalance":
+        cerebro.addstrategy(strategies.RwaRebalanceStrategy, min_order_period=min_order_period, rebalance_percents=rebalance_percents, log=log, debug=debug)
+    else:
+        error_message = f"Invalid strategy: '{strategy}'"
+        print(f"Error: {error_message}")
+        return
 
     # Get data feed
-    ticker_data = datas.get_nasdaq_ticker_time_series(start_date=start_date)
-
-    ticker_data_feed = bt.feeds.PandasData(
-        dataname=ticker_data,
-        datetime=0,
-        high=None,
-        low=None,
-        open=1,     # uses the column 1 ('Value') as open price
-        close=1,    # uses the column 1 ('Value') as close price
-        volume=None,
-        openinterest=None,
-    )
+    ticker_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq', start, end)
+    rwa_data_feed =  data_loader.to_backtrade_feed('ticker_nasdaq')
 
     # Add the Data Feed to Cerebro
     cerebro.adddata(ticker_data_feed)
+    cerebro.adddata(rwa_data_feed)
 
     # Add cash to the virtual broker
-    # cerebro.broker.setcash(100000.0)    # default: 10k
+    cerebro.broker.setcash(initial_cash)    # default: 10k
 
     start_portfolio_value = cerebro.broker.getvalue()
 
     cerebro.run()
 
-    end_portfolio_value = cerebro.broker.getvalue()
-    pnl_value = end_portfolio_value - start_portfolio_value
-    pnl_percent = (pnl_value / start_portfolio_value) * 100
-    pnl_sign = '' if pnl_value < 0 else '+'
+    end_portfolio_value = cerebro.broker.getvalue()     # Value in USDT
+    pnl_portfolio_value = end_portfolio_value - start_portfolio_value
 
-    # print("----------------------------------------")
-    print(f"{'Start value:':<12} {start_portfolio_value:2f} USD")
-    print(f"{'Final value:':<12} {end_portfolio_value:2f}  USD")
-    print(f"{'PnL:':<11} {pnl_sign}{pnl_value:.2f} USD ({pnl_sign}{pnl_percent:.2f}%)")
+    position = cerebro.getbroker().getposition(data=ticker_data_feed)   # position: size: BTC in portfolio, price: average BTC purchase price
+    start_btc_price, end_btc_price = data_loader.get_value_start_end(label = 'ticker_nasdaq', start = start, end = end)
 
-    # cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
+    # btc price and PnL at start
+    start_pnl_value = pnl_portfolio_value + (position.size * start_btc_price)
+    start_pnl_percent = (start_pnl_value / start_portfolio_value) * 100
+    start_pnl_sign = '' if start_pnl_value < 0 else '+'
+
+    # btc price and PnL at the end
+    end_pnl_value = pnl_portfolio_value + (position.size * end_btc_price)
+    end_pnl_percent = (end_pnl_value / start_portfolio_value) * 100
+    end_pnl_sign = '' if end_pnl_value < 0 else '+'
+
+    # btc price and PnL at the end
+    avg_btc_price = position.price
+    avg_pnl_value = pnl_portfolio_value + (position.size * avg_btc_price)
+    avg_pnl_percent = (avg_pnl_value / start_portfolio_value) * 100
+    avg_pnl_sign = '' if avg_pnl_value < 0 else '+'
+    
+    print("\nSIMULATION RESULT")
+    print("------------------------")
+    print(f"{'Started:':<12} {start_portfolio_value:<.2f} USD")
+    print(f"{'Ended:':<12} {end_portfolio_value:<.2f} USD, {position.size:6f} BTC")
+    print(f"{'PnL:':<12} {end_pnl_sign}{end_pnl_value:.2f} USD ({end_pnl_sign}{end_pnl_percent:.2f}%) at the latest price of {end_btc_price:.4f} USD")
+    print(f"{'PnL:':<12} {avg_pnl_sign}{avg_pnl_value:.2f} USD ({avg_pnl_sign}{avg_pnl_percent:.2f}%) on average price of {avg_btc_price:.4f} USD")
+    print(f"{'PnL:':<12} {start_pnl_sign}{start_pnl_value:.2f} USD ({start_pnl_sign}{start_pnl_percent:.2f}%) at the initial price of {start_btc_price:.4f} USD")
+
+    if run_plot_backtrader_result_test:
+        cerebro.plot(volume=False)  # iplot=False, style='bar' , stdstats=False
 
 
 if __name__ == '__main__':

@@ -13,10 +13,18 @@
             "justMyCode": true
         },
         {
-            "name": "Python: bt_fng.test",
+            "name": "Python: tests/bt_fng.py",
             "type": "python",
             "request": "launch",
             "program": "${cwd}/tests/bt_fng.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: tests/bt_rwa.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${cwd}/tests/bt_rwa.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },

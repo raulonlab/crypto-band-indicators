@@ -75,7 +75,7 @@ class FngWeightedAverageStrategy(OrderLoggerStrategy):
         buy_dol_size = self.params.weighted_buy_amount * self.params.weighted_multipliers[fng_info.get('index', 2)] 
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
-            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, FnG: ({fng_info['fng_ordinal']}) {fng_info['name']}, BTC price: {self.price[0]:.4f}", log_color=utils.LogColors.BOLD)
+            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, FnG: {fng_info['fng_ordinal']} - {fng_info['name']}, 1 BTC = {self.price[0]:.2f} USD", log_color=utils.LogColors.BOLD)
 
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)
@@ -104,7 +104,7 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
             int(self.fng_value[0]))
         
         self.log(
-                f"R REBALANCE (FIRST). Current FnG: ({fng_info['fng_ordinal']}) {fng_info['name']}, No previous FnG", log_color=utils.LogColors.OKCYAN)
+                f"R REBALANCE (FIRST). Current FnG: {fng_info['fng_ordinal']} - {fng_info['name']}, No previous FnG", log_color=utils.LogColors.OKCYAN)
         self.rebalance(self.params.rebalance_percents[fng_info.get('fng_index')])
 
     def next(self):
@@ -123,7 +123,7 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
             self.debug(f"  ...skip: still to soon to buy")
             return
 
-        # Rebalance if the the MA (of period min_order_period) and current fng is major than previous reblance fng
+        # Rebalance if fng index MA (in period min_order_period) is equals to current fng index and are different than previous rebalance
         fng_info = FngIndicator._get_fng_value_details(
             int(self.fng_value[0]))
         # print(f"0 : value: {self.fng_value[0]:<3}, index: {fng_info.get('fng_index')}")
@@ -134,13 +134,15 @@ class FngRebalanceStrategy(OrderLoggerStrategy):
         
         if fng_info.get('fng_index') == fng_ma_info.get('fng_index') and fng_info.get('fng_index') != last_bar_executed_fng_info.get('fng_index'):
             self.log(
-                f"R REBALANCE. Current FnG: ({fng_info['fng_ordinal']}) {fng_info['name']}, Previous FnG: ({last_bar_executed_fng_info['fng_ordinal']}) {last_bar_executed_fng_info['name']}", log_color=utils.LogColors.OKCYAN)
+                f"R REBALANCE. Current FnG: {fng_info['fng_ordinal']} - {fng_info['name']}, Previous FnG: {last_bar_executed_fng_info['fng_ordinal']} - {last_bar_executed_fng_info['name']}", log_color=utils.LogColors.OKCYAN)
             self.rebalance(self.params.rebalance_percents[fng_info.get('fng_index')])
+        else:
+            self.debug(f"  ...skip: condition not fullfilled. Current FnG: {fng_info['fng_ordinal']}, MA FnG: {fng_ma_info['fng_ordinal']},  Previous FnG: {last_bar_executed_fng_info['fng_ordinal']}")
 
 
     def rebalance(self, percent: float):
         current_value = self.broker.getvalue()
-        # print(f"CURRENT VALUE: {current_value:.2f} USD")
+
         if self.position:
             current_position_value = self.position.size * self.price[0]
         else:

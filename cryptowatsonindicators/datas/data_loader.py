@@ -9,25 +9,24 @@ import backtrader as bt
 from datetime import datetime, date, timedelta
 from .alternative import get_fng_history
 from cryptowatsonindicators.utils import parse_any_date
-
 nasdaqdatalink.ApiConfig.verify_ssl = False
+
 
 NASDAQ_CSV_CACHE_PATH = 'btcusdt_1d_nasdaq.csv'
 FNG_CSV_CACHE_PATH = 'fng_1d_alternative.csv'
 RAINBOW_CSV_CACHE_PATH = 'rainbow_1d_nasdaq.csv'
 DEFAULT_CSV_CACHE_PATH = 'default_1d.csv'
-
-# DATA_SOURCES = ['ticker_nasdaq', 'fng', 'rainbow']
-
 SOURCE_INFO = {
     'ticker_nasdaq': {'cache_path': 'btcusdt_1d_nasdaq.csv', 'index_column': 'date', 'numeric_columns': ['close'], 'text_columns': []},
     'fng': {'cache_path': 'fng_1d_alternative.csv', 'index_column': 'date', 'numeric_columns': ['close'], 'text_columns': ['close_name']},
 }
 
+
 class DataFrameWrapper:
     def __init__(self, source: str, dataframe: pd.DataFrame):
         self.source = source
         self.dataframe = dataframe
+
 
 class DataLoader:
     dataframes = dict()
@@ -40,10 +39,9 @@ class DataLoader:
     binance_secret_key = None
     only_cache = False
 
-    def __init__(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):
+
+    def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):
         self.ticker_symbol = ticker_symbol
-        self.start = parse_any_date(start, datetime(2010, 1, 1))
-        self.end = parse_any_date(end, None)
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
 
@@ -60,15 +58,14 @@ class DataLoader:
         missing_start_date = None
 
         # Load cached csv data
-        # try:
-        cached_data = DataLoader.read_cache(source)
-        last_date_cached = cached_data.index.max() if isinstance(cached_data, pd.DataFrame) else None
-        if last_date_cached:
-            missing_start_date = last_date_cached.date() + timedelta(days=1)
-    
-        # except Exception as e:
-            # print(f"[warn] Error loading csv cache file: {NASDAQ_CSV_CACHE_PATH}: {repr(e)}")
-            # cached_data = None
+        try:
+            cached_data = DataLoader.read_cache(source)
+            last_date_cached = cached_data.index.max() if isinstance(cached_data, pd.DataFrame) else None
+            if last_date_cached:
+                missing_start_date = last_date_cached.date() + timedelta(days=1)
+        except Exception as e:
+            print(f"[warn] Error loading csv cache file: {NASDAQ_CSV_CACHE_PATH}: {repr(e)}")
+            cached_data = None
 
         # Fetch API data
         if not self.only_cache:
@@ -95,11 +92,8 @@ class DataLoader:
             print(f"WARNING: {error_message}")
             return
         
-        # Filter data
-        all_data = all_data[all_data.index >= self.start]
-
-        # Reindex data
-        all_data = DataLoader.reindex(all_data, self.start, self.end)
+        # Fill missing time series
+        all_data = DataLoader.fill_the_gaps(all_data)
         
         # Register data and source
         self.last_dataframe_loaded = all_data
@@ -110,46 +104,56 @@ class DataLoader:
         return self
 
 
-    def to_dataframe(self, label: str = None) -> pd.DataFrame:
+    def to_dataframe(self, label: str = None, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> pd.DataFrame:
         if not label:
-            return self.last_dataframe_loaded
+            df = self.last_dataframe_loaded
         else:
-            return self.dataframes[label].dataframe
-    
-    def to_dataframes(self) -> List(pd.DataFrame):
+            df = self.dataframes[label].dataframe
+        
+        # Filter by dates
+        start = parse_any_date(start)
+        end = parse_any_date(end)
+        return DataLoader.filter_by_dates(df, start, end)
+
+
+    def to_dataframes(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> List(pd.DataFrame):
+        start = parse_any_date(start)
+        end = parse_any_date(end)
         dataframes = []
         for dataframe_wrapper in list(self.dataframes.values()):
-            dataframes.append(dataframe_wrapper.dataframe)
+            # Append filtered by dates
+            dataframes.append(DataLoader.filter_by_dates(dataframe_wrapper.dataframe, start, end))
         
         return dataframes
 
-    def to_backtrade_feed(self, label: str = None) -> bt.feeds.PandasData:
-        if not label:
-            dataframe = self.last_dataframe_loaded
-        else:
-            dataframe = self.dataframes[label].dataframe
+
+    def to_backtrade_feed(self, label: str = None, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> bt.feeds.PandasData:
+        df = self.to_dataframe(label, start, end)
     
         return bt.feeds.PandasData(
-            dataname=dataframe,
+            dataname=df,
             # datetime=list(ticker_data.columns).index("Date"),
             high=None,
             low=None,
-            open=list(dataframe.columns).index("close"),     # uses the column 1 ('Value') as open price
-            close=list(dataframe.columns).index("close"),    # uses the column 1 ('Value') as close price
+            open=list(df.columns).index("close"),     # uses the column 1 ('Value') as open price
+            close=list(df.columns).index("close"),    # uses the column 1 ('Value') as close price
             volume=None,
             openinterest=None,
         )
 
-    def to_backtrade_feeds(self) -> List(bt.feeds.PandasData):
+
+    def to_backtrade_feeds(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> List(bt.feeds.PandasData):
+        df_list = self.to_dataframes(start, end)
+        
         backtrade_feeds = list()
-        for dataframe_wrapper in list(self.dataframes.values()):
+        for df in df_list:
             backtrade_feeds.append(bt.feeds.PandasData(
-                dataname=dataframe_wrapper.dataframe,
+                dataname=df,
                 # datetime=list(ticker_data.columns).index("Date"),
                 high=None,
                 low=None,
-                open=list(dataframe_wrapper.dataframe.columns).index("close"),     # uses the column 1 ('Value') as open price
-                close=list(dataframe_wrapper.dataframe.columns).index("close"),    # uses the column 1 ('Value') as close price
+                open=list(df.columns).index("close"),     # uses the column 1 ('Value') as open price
+                close=list(df.columns).index("close"),    # uses the column 1 ('Value') as close price
                 volume=None,
                 openinterest=None,
             ))
@@ -157,20 +161,44 @@ class DataLoader:
         return backtrade_feeds
 
 
-    def get_value_start_end(self, label: str = None, column_name: str = 'close') -> Tuple(float):
+    def get_value_start_end(self, label: str = None, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None, column_name: str = 'close') -> Tuple(float):
         if not label:
             dataframe = self.last_dataframe_loaded
         else:
             dataframe = self.dataframes[label].dataframe
         
-        return (float(dataframe.iloc[0][column_name]), float(dataframe.iloc[-1][column_name]))
+        # Get start index
+        start_index = parse_any_date(start)
+        if not start_index:
+            start_index = dataframe.index.min()
+        
+        # Get end index
+        end_index = parse_any_date(end)
+        if not end_index:
+            end_index = dataframe.index.max()
+        
+        rwa_serie_start = dataframe[dataframe.index == pd.to_datetime(start_index)]
+        rwa_serie_end = dataframe[dataframe.index == pd.to_datetime(end_index)]
+        return (float(rwa_serie_start[column_name]), float(rwa_serie_end[column_name]))
 
 
     @classmethod
-    def reindex(cls, dataframe: pd.DataFrame, start: datetime, end: datetime) -> pd.DataFrame:
-        # Git min and max index
-        min = dataframe.index.min()
-        max = dataframe.index.max()
+    def fill_the_gaps(cls, df: pd.DataFrame) -> pd.DataFrame:
+        return cls.reindex(df)
+
+
+    @classmethod
+    def filter_by_dates(cls, df: pd.DataFrame, start: datetime = None, end: datetime = None) -> pd.DataFrame:
+        min = start if start is not None else df.index.min()
+        max = end if end is not None else df.index.max()
+
+        return df[(df.index >= min) & (df.index <= max)]
+
+
+    @classmethod
+    def reindex(cls, df: pd.DataFrame, start: datetime = None, end: datetime = None) -> pd.DataFrame:
+        min = df.index.min()
+        max = df.index.max()
 
         # Filter index range
         if start is not None:
@@ -179,9 +207,9 @@ class DataLoader:
             max = end if end < max else max
         
         all_dates_range = pd.date_range(min, max)   # start=min, end=max, freq="D"
-        # print('missing_dates in dataframe: ', all_dates_range.difference(dataframe.index))
+        # print('missing_dates in df: ', all_dates_range.difference(df.index))
 
-        return dataframe.reindex(all_dates_range, fill_value = np.nan).interpolate()
+        return df.reindex(all_dates_range, fill_value = np.nan).interpolate()
 
 
     @classmethod
@@ -353,7 +381,7 @@ class DataLoader:
         dt1 = data1.set_index(date_column_name, drop=True)
         dt2 = data2.set_index(date_column_name, drop=True)
         
-        # Git min and max across the 2 dataframes
+        # Get min and max across the 2 dataframes
         min1 = dt1.index.min()
         max1 = dt1.index.max()
         min2 = dt2.index.min()
@@ -389,7 +417,6 @@ class DataLoader:
         # return
         
         return dt1, dt2
-
 
 
     # fill missing dates in dataframe and return dataframe object
