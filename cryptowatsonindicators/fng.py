@@ -20,7 +20,7 @@ FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
 
 class FngIndicator:
-    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None]  = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
+    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
@@ -29,7 +29,8 @@ class FngIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.DataLoader().load_data('fng').to_dataframe(start = indicator_start_date)
+            self.indicator_data = datas.DataLoader().load_data(
+                'fng').to_dataframe(start=indicator_start_date)
 
         if (self.indicator_data is None or self.indicator_data.empty):
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -47,16 +48,17 @@ class FngIndicator:
         at_date = utils.parse_any_date(at_date)
         if not at_date:
             at_date = self.indicator_data.index.max().date()
-        
-        fng_at_serie = self.indicator_data[self.indicator_data.index == pd.to_datetime(at_date)]
+
+        fng_at_serie = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+            at_date)]
         if (fng_at_serie.empty):
-            print(f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date}")
+            print(
+                f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date}")
             return None
-        
+
         fng_at_value = int(fng_at_serie['close'])
 
         return fng_at_value
-
 
     @classmethod
     def _get_fng_value_details(cls, value: int = -1) -> dict:
@@ -120,13 +122,14 @@ class FngIndicator:
         axes.set_title('Fear and Greed history')
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        
+
         # Set xticks
         fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks = self.indicator_data.iloc[::int(
+            fng_data_length/20)].index.to_list()
         fng_xticks[0] = self.indicator_data.index.min()
         fng_xticks[-1] = self.indicator_data.index.max()
-        
+
         axes.set_xticks(fng_xticks)
         plt.xticks(fontsize=8, rotation=45, ha='right')
 
@@ -148,7 +151,8 @@ class FngIndicator:
             return None
 
         if (ticker_data is None or ticker_data.empty):
-            print(f"[warn] plot_fng_and_ticker_price: No data available in ticker_data")
+            print(
+                f"[warn] plot_fng_and_ticker_price: No data available in ticker_data")
             return None
 
         fig, axes = plt.subplots()
@@ -186,7 +190,8 @@ class FngIndicator:
 
         # Get index positions for xticks
         fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks = self.indicator_data.iloc[::int(
+            fng_data_length/20)].index.to_list()
         fng_xticks[0] = self.indicator_data.index.min()
         fng_xticks[-1] = self.indicator_data.index.max()
 
@@ -273,7 +278,8 @@ class FngIndicator:
         # fng ticks
         fng_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(fng_data_length/20)].index.to_list()
+        fng_xticks = self.indicator_data.iloc[::int(
+            fng_data_length/20)].index.to_list()
         fng_xticks[0] = self.indicator_data.index.min()
         fng_xticks[-1] = self.indicator_data.index.max()
         fng_axes.set_xticks(fng_xticks)

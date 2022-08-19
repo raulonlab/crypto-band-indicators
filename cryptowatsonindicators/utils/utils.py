@@ -27,8 +27,8 @@ class Emojis:
     DOWN = '▼'      # ▽
     BUY = 'B'          # 🅱 🅑 Ⓑ 🍀 👍
     SELL = 'S'         # 🆂 🅢 Ⓢ 🚫 👎 🫳🏼
-    OK = '✔' # '✓'
-    FAIL = '✘' # '𐄂'
+    OK = '✔'  # '✓'
+    FAIL = '✘'  # '𐄂'
 
 
 def parse_any_date(date_any: Union[str, date, None] = None, default_date: any = None) -> Union[datetime, any]:

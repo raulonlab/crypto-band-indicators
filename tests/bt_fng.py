@@ -5,19 +5,21 @@ pprint = pprint.PrettyPrinter(
     indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
 
 # Global variables
-strategy             = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
-ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
-start                = '01/03/2022'   # start date of the simulation. Ex: '01/08/2020' or None
-end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
-initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
-min_order_period     = 7              # Minimum period in days to place orders
-weighted_buy_amount  = 100            # Amount purchased in standard DCA
-weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
-rebalance_percents   = [85, 65, 50, 15, 10]         # rebalance percentages for each index
+strategy = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
+ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
+start = '01/03/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+end = None           # end date of the simulation. Ex: '01/08/2020' or None
+initial_cash = 10000.0        # initial broker cash. Default 10000 usd
+min_order_period = 7              # Minimum period in days to place orders
+weighted_buy_amount = 100            # Amount purchased in standard DCA
+# order amount multipliers (weighted) for each index
+weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]
+# rebalance percentages for each index
+rebalance_percents = [85, 65, 50, 15, 10]
 
 # logging
-log=True
-debug=False
+log = True
+debug = False
 
 # Enable / diable parts to bo tested
 run_get_value_test = True
@@ -27,11 +29,13 @@ run_plot_backtrader_result_test = True
 
 # Data loader
 data_loader = datas.DataLoader()\
-        .load_data('ticker_nasdaq') \
-        .load_data('fng')
+    .load_data('ticker_nasdaq') \
+    .load_data('fng')
 
 # Fng Indicator with 'fng' data
-fng = FngIndicator(data_loader.to_dataframe('fng'), ticker_symbol = ticker_symbol)
+fng = FngIndicator(data_loader.to_dataframe(
+    'fng'), ticker_symbol=ticker_symbol)
+
 
 def get_value_test():
     # Get Current Fear and Greed index
@@ -50,7 +54,8 @@ def get_value_test():
 
 
 def plot_test():
-    fng.plot_fng_and_ticker_price(ticker_data=data_loader.to_dataframe('ticker_nasdaq'))
+    fng.plot_fng_and_ticker_price(
+        ticker_data=data_loader.to_dataframe('ticker_nasdaq'))
     # fng.plot_fng()
 
 
@@ -60,18 +65,20 @@ def backtrader_test():
 
     if strategy == "weighted_dca":
         cerebro.addstrategy(strategies.FngWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
-                        min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
+                            min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
     elif strategy == "rebalance":
-        cerebro.addstrategy(strategies.FngRebalanceStrategy, min_order_period=min_order_period, rebalance_percents=rebalance_percents, log=log, debug=debug)
+        cerebro.addstrategy(strategies.FngRebalanceStrategy, min_order_period=min_order_period,
+                            rebalance_percents=rebalance_percents, log=log, debug=debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"
         print(f"Error: {error_message}")
         return
 
     # Get data feed
-    ticker_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq', start, end)
-    fng_data_feed =  data_loader.to_backtrade_feed('fng')
-    
+    ticker_data_feed = data_loader.to_backtrade_feed(
+        'ticker_nasdaq', start, end)
+    fng_data_feed = data_loader.to_backtrade_feed('fng')
+
     # Add the data to Cerebro
     cerebro.adddata(ticker_data_feed)
     cerebro.adddata(fng_data_feed)
@@ -86,8 +93,10 @@ def backtrader_test():
     end_portfolio_value = cerebro.broker.getvalue()     # Value in USDT
     pnl_portfolio_value = end_portfolio_value - start_portfolio_value
 
-    position = cerebro.getbroker().getposition(data=ticker_data_feed)   # position: size: BTC in portfolio, price: average BTC purchase price
-    start_btc_price, end_btc_price = data_loader.get_value_start_end(label = 'ticker_nasdaq', start = start, end = end)
+    # position: size: BTC in portfolio, price: average BTC purchase price
+    position = cerebro.getbroker().getposition(data=ticker_data_feed)
+    start_btc_price, end_btc_price = data_loader.get_value_start_end(
+        label='ticker_nasdaq', start=start, end=end)
 
     # btc price and PnL at start
     start_pnl_value = pnl_portfolio_value + (position.size * start_btc_price)
@@ -104,7 +113,7 @@ def backtrader_test():
     avg_pnl_value = pnl_portfolio_value + (position.size * avg_btc_price)
     avg_pnl_percent = (avg_pnl_value / start_portfolio_value) * 100
     avg_pnl_sign = '' if avg_pnl_value < 0 else '+'
-    
+
     print("\nSIMULATION RESULT")
     print("------------------------")
     print(f"{'Started:':<12} {start_portfolio_value:<.2f} USD")

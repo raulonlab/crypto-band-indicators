@@ -80,6 +80,5 @@ class OrderLoggerStrategy(LoggerStrategy):
         # Sentinel to None: new orders allowed
         self.order = None
 
-
     def get_last_bar_executed_ago(self):
         return (self.last_bar_executed - len(self)) if self.last_bar_executed is not None else None

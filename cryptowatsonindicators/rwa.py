@@ -10,7 +10,8 @@ from cryptowatsonindicators import datas, utils
 
 RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
                        "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
-RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95', '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
+RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
+                        '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
 RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
     0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
 RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
@@ -27,7 +28,8 @@ class RwaIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.DataLoader().load_data('ticker_nasdaq').to_dataframe(start = indicator_start_date)
+            self.indicator_data = datas.DataLoader().load_data(
+                'ticker_nasdaq').to_dataframe(start=indicator_start_date)
 
         if (self.indicator_data is None or self.indicator_data.empty):
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -39,11 +41,13 @@ class RwaIndicator:
         xdata = np.array([x + 1 for x in range(len(self.indicator_data))])
         ydata = np.log(self.indicator_data["close"])
         # here we ar fitting the curve, you can use 2 data points however I wasn't able to get a graph that looked as good with just 2 points.
-        popt, pcov = curve_fit(RwaIndicator._rwa_logarithmic_function, xdata, ydata)  # p0=[10, 100, 90], p0 is justa guess, doesn't matter as far as I know
+        # p0=[10, 100, 90], p0 is justa guess, doesn't matter as far as I know
+        popt, pcov = curve_fit(
+            RwaIndicator._rwa_logarithmic_function, xdata, ydata)
         # This is our fitted data, remember we will need to get the ex of it to graph it
 
         # print('popt: ', popt)
-        
+
         self.fittedYData = RwaIndicator._rwa_logarithmic_function(
             xdata, popt[0], popt[1], popt[2])
         # Add columns with rainbow coordenates
@@ -51,30 +55,30 @@ class RwaIndicator:
             self.indicator_data[f"fitted_data{i}"] = np.exp(
                 self.fittedYData + i * fitted_multiplier)
 
-
     def get_current_rainbow_band_index(self):
         # Get current ticker price from Binance
         price_dict = datas.DataLoader.get_binance_ticker_market_price(self.ticker_symbol,
-            self.binance_api_key, self.binance_secret_key)
+                                                                      self.binance_api_key, self.binance_secret_key)
         current_price = float(price_dict["price"])
 
         # Get rainbow band index (at the most recent time of the time series)
         return self.get_rainbow_band_index(current_price)
-
 
     def get_rainbow_band_index(self, price: float, at_date: Union[str, date, datetime, None] = None):
         if (self.indicator_data is None or self.indicator_data.empty):
             print(
                 f"[warn] RwaIndicator.get_rainbow_band_index: No historical data available")
             return None
-        
+
         at_date = utils.parse_any_date(at_date)
         if not at_date:
             at_date = self.indicator_data.index.max().date()
-        
-        rwa_serie_at_date = self.indicator_data[self.indicator_data.index == pd.to_datetime(at_date)]
+
+        rwa_serie_at_date = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+            at_date)]
         if (rwa_serie_at_date.empty):
-            print(f"[warn] RwaIndicator.get_rainbow_band_index: Data not found at date {at_date}")
+            print(
+                f"[warn] RwaIndicator.get_rainbow_band_index: Data not found at date {at_date}")
             return None
 
         # Search for the band index
@@ -155,14 +159,17 @@ class RwaIndicator:
         # Draw the rainbow bands
         for i in range(-2, 7):
             # You can use the below plot fill between rather than the above line plot, I prefer the line graph
-            axes.fill_between(self.indicator_data.index, self.indicator_data[f"fitted_data{i-1}"], self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=RAINBOW_BANDS_COLORS[i+2])
-            axes.plot(self.indicator_data.index, self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=RAINBOW_BANDS_COLORS[i+2])
+            axes.fill_between(self.indicator_data.index, self.indicator_data[f"fitted_data{i-1}"],
+                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=RAINBOW_BANDS_COLORS[i+2])
+            axes.plot(self.indicator_data.index,
+                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=RAINBOW_BANDS_COLORS[i+2])
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
         # Set xticks
         rwa_data_length = len(self.indicator_data)
-        rwa_xticks = self.indicator_data.iloc[::int(rwa_data_length/20)].index.to_list()
+        rwa_xticks = self.indicator_data.iloc[::int(
+            rwa_data_length/20)].index.to_list()
         rwa_xticks[0] = self.indicator_data.index.min()
         rwa_xticks[-1] = self.indicator_data.index.max()
         axes.set_xticks(rwa_xticks)
@@ -176,7 +183,8 @@ class RwaIndicator:
             print(f"fitted_data{i}: ", latest_serie[f"fitted_data{i}"])
             rainbow_band_yticks.append(latest_serie[f"fitted_data{i}"])
         band_axis.set_yticks(rainbow_band_yticks)
-        band_axis.set_yticklabels([f"{rainbow_band_ytick:.2f}" for rainbow_band_ytick in rainbow_band_yticks])
+        band_axis.set_yticklabels(
+            [f"{rainbow_band_ytick:.2f}" for rainbow_band_ytick in rainbow_band_yticks])
 
         # axes2.axvline(x=self.indicator_data.index.max(), color='#333333', linewidth=1)  # label='Today'
 

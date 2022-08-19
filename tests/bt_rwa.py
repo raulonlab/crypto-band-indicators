@@ -5,20 +5,22 @@ pprint = pprint.PrettyPrinter(
     indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
 
 # Global variables
-strategy             = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
-ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
-start                = '01/01/2022'   # start date of the simulation. Ex: '01/08/2020' or None
-end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
-initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
-min_order_period     = 5              # Minimum period in days to place orders
-weighted_buy_amount  = 100            # Amount purchased in standard DCA
+strategy = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
+ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
+start = '01/01/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+end = None           # end date of the simulation. Ex: '01/08/2020' or None
+initial_cash = 10000.0        # initial broker cash. Default 10000 usd
+min_order_period = 5              # Minimum period in days to place orders
+weighted_buy_amount = 100            # Amount purchased in standard DCA
 # weighted_multipliers = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]      # Default order amount multipliers (weighted) for each index
-weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]    # Fibonacci order amount multipliers (weighted) for each index
-rebalance_percents   = [10, 20, 30, 40, 50, 60, 70, 80, 90]         # rebalance percentages for each index
+# Fibonacci order amount multipliers (weighted) for each index
+weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
+# rebalance percentages for each index
+rebalance_percents = [10, 20, 30, 40, 50, 60, 70, 80, 90]
 
 # logging
-log=True
-debug=False
+log = True
+debug = False
 
 # Enable / diable parts to bo tested
 run_get_value_test = True
@@ -62,17 +64,19 @@ def backtrader_test():
 
     if strategy == "weighted_dca":
         cerebro.addstrategy(strategies.RwaWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
-                        min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
+                            min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
     elif strategy == "rebalance":
-        cerebro.addstrategy(strategies.RwaRebalanceStrategy, min_order_period=min_order_period, rebalance_percents=rebalance_percents, log=log, debug=debug)
+        cerebro.addstrategy(strategies.RwaRebalanceStrategy, min_order_period=min_order_period,
+                            rebalance_percents=rebalance_percents, log=log, debug=debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"
         print(f"Error: {error_message}")
         return
 
     # Get data feed
-    ticker_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq', start, end)
-    rwa_data_feed =  data_loader.to_backtrade_feed('ticker_nasdaq')
+    ticker_data_feed = data_loader.to_backtrade_feed(
+        'ticker_nasdaq', start, end)
+    rwa_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq')
 
     # Add the Data Feed to Cerebro
     cerebro.adddata(ticker_data_feed)
@@ -88,8 +92,10 @@ def backtrader_test():
     end_portfolio_value = cerebro.broker.getvalue()     # Value in USDT
     pnl_portfolio_value = end_portfolio_value - start_portfolio_value
 
-    position = cerebro.getbroker().getposition(data=ticker_data_feed)   # position: size: BTC in portfolio, price: average BTC purchase price
-    start_btc_price, end_btc_price = data_loader.get_value_start_end(label = 'ticker_nasdaq', start = start, end = end)
+    # position: size: BTC in portfolio, price: average BTC purchase price
+    position = cerebro.getbroker().getposition(data=ticker_data_feed)
+    start_btc_price, end_btc_price = data_loader.get_value_start_end(
+        label='ticker_nasdaq', start=start, end=end)
 
     # btc price and PnL at start
     start_pnl_value = pnl_portfolio_value + (position.size * start_btc_price)
@@ -106,7 +112,7 @@ def backtrader_test():
     avg_pnl_value = pnl_portfolio_value + (position.size * avg_btc_price)
     avg_pnl_percent = (avg_pnl_value / start_portfolio_value) * 100
     avg_pnl_sign = '' if avg_pnl_value < 0 else '+'
-    
+
     print("\nSIMULATION RESULT")
     print("------------------------")
     print(f"{'Started:':<12} {start_portfolio_value:<.2f} USD")
