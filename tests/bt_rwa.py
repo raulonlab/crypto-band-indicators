@@ -27,12 +27,12 @@ run_plot_test = True
 run_backtrader_test = True
 run_plot_backtrader_result_test = True
 
-# Data loader
-data_loader = datas.DataLoader().load_data('ticker_nasdaq')
+# Data sources
+ticker_data_source = datas.TickerDataSource()
 
 # Limit indicator series to start at specific date or None to use all the history
 indicator_start_date = None
-rwa = RwaIndicator(data_loader.to_dataframe('ticker_nasdaq'))
+rwa = RwaIndicator(ticker_data_source.to_dataframe())
 
 
 def get_value_test():
@@ -73,9 +73,8 @@ def backtrader_test():
         return
 
     # Get data feed
-    ticker_data_feed = data_loader.to_backtrade_feed(
-        'ticker_nasdaq', start, end)
-    rwa_data_feed = data_loader.to_backtrade_feed('ticker_nasdaq')
+    ticker_data_feed = ticker_data_source.to_backtrade_feed(start, end)
+    rwa_data_feed = ticker_data_source.to_backtrade_feed()
 
     # Add the Data Feed to Cerebro
     cerebro.adddata(ticker_data_feed)
@@ -93,8 +92,8 @@ def backtrader_test():
 
     # position: size: BTC in portfolio, price: average BTC purchase price
     position = cerebro.getbroker().getposition(data=ticker_data_feed)
-    start_btc_price, end_btc_price = data_loader.get_value_start_end(
-        label='ticker_nasdaq', start=start, end=end)
+    start_btc_price, end_btc_price = ticker_data_source.get_value_start_end(
+        start=start, end=end)
 
     # btc price and PnL at start
     start_pnl_value = pnl_portfolio_value + (position.size * start_btc_price)

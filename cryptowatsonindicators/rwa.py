@@ -28,10 +28,9 @@ class RwaIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.DataLoader().load_data(
-                'ticker_nasdaq').to_dataframe(start=indicator_start_date)
+            self.indicator_data = datas.TickerDataSource().to_dataframe(start=indicator_start_date)
 
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
@@ -57,7 +56,7 @@ class RwaIndicator:
 
     def get_current_rainbow_band_index(self):
         # Get current ticker price from Binance
-        price_dict = datas.DataLoader.get_binance_ticker_market_price(self.ticker_symbol,
+        price_dict = datas.TickerDataSource.get_binance_ticker_market_price(self.ticker_symbol,
                                                                       self.binance_api_key, self.binance_secret_key)
         current_price = float(price_dict["price"])
 
@@ -65,7 +64,7 @@ class RwaIndicator:
         return self.get_rainbow_band_index(current_price)
 
     def get_rainbow_band_index(self, price: float, at_date: Union[str, date, datetime, None] = None):
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
                 f"[warn] RwaIndicator.get_rainbow_band_index: No historical data available")
             return None
@@ -140,7 +139,7 @@ class RwaIndicator:
         }
 
     def plot_rainbow(self):
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] plot_rainbow: No historical data available")
             return None
 

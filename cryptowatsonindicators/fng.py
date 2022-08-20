@@ -29,10 +29,9 @@ class FngIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.DataLoader().load_data(
-                'fng').to_dataframe(start=indicator_start_date)
+            self.indicator_data = datas.FngDataSource().to_dataframe(start=indicator_start_date)
 
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
@@ -41,7 +40,7 @@ class FngIndicator:
         return self.get_fng_value(at_date=None)
 
     def get_fng_value(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] FngIndicator.get_fng_value: No indicator data available")
             return None
 
@@ -87,7 +86,7 @@ class FngIndicator:
         }
 
     def plot_fng(self):
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] FngIndicator.plot_fng: No indicator data available")
             return None
 
@@ -145,12 +144,12 @@ class FngIndicator:
         plt.show()
 
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
                 f"[warn] FngIndicator.plot_fng_and_ticker_price: No indicator data available")
             return None
 
-        if (ticker_data is None or ticker_data.empty):
+        if not isinstance(ticker_data, pd.DataFrame) or ticker_data.empty:
             print(
                 f"[warn] plot_fng_and_ticker_price: No data available in ticker_data")
             return None
@@ -226,7 +225,7 @@ class FngIndicator:
         plt.show()
 
     def plot_fng_and_ticker_price_2(self):
-        if (self.indicator_data is None or self.indicator_data.empty):
+        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
                 f"[warn] FngIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
@@ -234,7 +233,7 @@ class FngIndicator:
         ticker_start_date = self.indicator_data.index[0]
         ticker_data = datas.get_nasdaq_ticker_time_series(
             start_date=ticker_start_date)
-        if (ticker_data is None or ticker_data.empty):
+        if not isinstance(ticker_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] plot_fng_and_ticker_price: No ticker data available")
             return None
 
