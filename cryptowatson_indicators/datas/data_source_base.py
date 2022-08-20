@@ -1,7 +1,6 @@
 from __future__ import annotations
 from binance.client import Client
 from typing import List, Tuple, Union
-from traceback import format_exc
 import pandas as pd
 import numpy as np
 import backtrader as bt
@@ -34,7 +33,7 @@ class DataSourceBase:
                 missing_start_date = last_date_cached.date() + timedelta(days=1)
         except Exception as e:
             print(
-                f"[warn] Error reading cache in: {self.__class__}: {format_exc()}")
+                f"[warn] Error reading cache in: {self.__class__}: {str(e)}")
             cached_data = None
 
         # Fetch API data
