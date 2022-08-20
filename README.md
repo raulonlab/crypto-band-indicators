@@ -70,9 +70,9 @@ Applies a rebalance percentage of the position between BTC and USDT depending on
 
 ## Simulators
 
-The simulators are coded in Jupyter notebooks and can be open on Google Collab with these links:
+The simulators are available as Jupyter notebooks in Google Collab:
 
--[Open Fear and Greed simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
+- [Open Fear and Greed simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
 
 - [Open Rainbow simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/rwa_simulator.ipynb)
 
