@@ -1,6 +1,5 @@
 import backtrader as bt
-from cryptowatsonindicators import utils
-
+from cryptowatson_indicators import utils
 
 class LoggerStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
@@ -54,13 +53,16 @@ class OrderLoggerStrategy(LoggerStrategy):
 
         if order.status in [order.Completed]:
             order_status_log_prefix = '  ORDER COMPLETED'
+            log_color=utils.LogColors.ENDC
             if order.isbuy():
                 order_status_log_prefix = '  BUY COMPLETED'
+                log_color=utils.LogColors.BUY
             elif order.issell():
                 order_status_log_prefix = '  SELL COMPLETED'
+                log_color=utils.LogColors.SELL
 
             self.log(f'{order_status_log_prefix}, size: {order.executed.size:.6f} BTC = {order.executed.value:.2f} USD, comm {order.executed.comm:.2f}, 1 BTC = {order.executed.price:.2f} USD',
-                     log_color=utils.LogColors.BUY)
+                     log_color=log_color)
 
             self.last_bar_executed = len(self)
 

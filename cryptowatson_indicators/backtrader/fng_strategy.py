@@ -1,6 +1,7 @@
 from datetime import timedelta
 import backtrader as bt
-from cryptowatsonindicators import FngIndicator, utils
+from cryptowatson_indicators.indicators import FngIndicator
+from cryptowatson_indicators import utils
 from .base_strategy import OrderLoggerStrategy
 
 
@@ -44,7 +45,7 @@ class FngWeightedAverageStrategy(OrderLoggerStrategy):
             self.params.weighted_multipliers[fng_info.get('index', 2)]
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
-            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, FnG: {fng_info['fng_ordinal']} - {fng_info['name']}, 1 BTC = {self.price[0]:.2f} USD", log_color=utils.LogColors.BOLD)
+            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, FnG: {fng_info['fng_ordinal']} - {fng_info['name']}, 1 BTC = {self.price[0]:.2f} USD", log_color=utils.LogColors.BOLDBUY)
 
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)

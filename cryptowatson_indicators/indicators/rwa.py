@@ -6,20 +6,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.optimize import curve_fit
-from cryptowatsonindicators import datas, utils
+from cryptowatson_indicators.datas import TickerDataSource 
+from ..utils import utils
 
-RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
+_RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
                        "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
-RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
+_RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
                         '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
-RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
+_RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
     0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
-RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
-FITTED_BAND_LOG_MULTIPLIER = .455
+_RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
+_FITTED_BAND_LOG_MULTIPLIER = .455
 
 
 class RwaIndicator:
-    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = '', fitted_multiplier: float = FITTED_BAND_LOG_MULTIPLIER):
+    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = '', fitted_multiplier: float = _FITTED_BAND_LOG_MULTIPLIER):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
@@ -28,7 +29,7 @@ class RwaIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.TickerDataSource().to_dataframe(start=indicator_start_date)
+            self.indicator_data = TickerDataSource().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -56,7 +57,7 @@ class RwaIndicator:
 
     def get_current_rainbow_band_index(self):
         # Get current ticker price from Binance
-        price_dict = datas.TickerDataSource.get_binance_ticker_market_price(self.ticker_symbol,
+        price_dict = TickerDataSource.get_binance_ticker_market_price(self.ticker_symbol,
                                                                       self.binance_api_key, self.binance_secret_key)
         current_price = float(price_dict["price"])
 
@@ -126,16 +127,16 @@ class RwaIndicator:
 
     @classmethod
     def _get_rainbow_info_by_index(cls, index: int = -1) -> dict:
-        if (index < 0 or index > len(RAINBOW_BANDS_NAMES)):
+        if (index < 0 or index > len(_RAINBOW_BANDS_NAMES)):
             return dict()
 
         return {
             'band_index': index,
             'band_ordinal': f"{index + 1}/9",
-            'name': RAINBOW_BANDS_NAMES[index],
-            'color': RAINBOW_BANDS_COLORS[index],
-            'fibs_multiplier': RAINBOW_BANDS_FIBONACCI_MULTIPLIERS[index],
-            'original_multiplier': RAINBOW_BANDS_ORIGINAL_MULTIPLIERS[index],
+            'name': _RAINBOW_BANDS_NAMES[index],
+            'color': _RAINBOW_BANDS_COLORS[index],
+            'fibs_multiplier': _RAINBOW_BANDS_FIBONACCI_MULTIPLIERS[index],
+            'original_multiplier': _RAINBOW_BANDS_ORIGINAL_MULTIPLIERS[index],
         }
 
     def plot_rainbow(self):
@@ -159,9 +160,9 @@ class RwaIndicator:
         for i in range(-2, 7):
             # You can use the below plot fill between rather than the above line plot, I prefer the line graph
             axes.fill_between(self.indicator_data.index, self.indicator_data[f"fitted_data{i-1}"],
-                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=RAINBOW_BANDS_COLORS[i+2])
+                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=_RAINBOW_BANDS_COLORS[i+2])
             axes.plot(self.indicator_data.index,
-                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=RAINBOW_BANDS_COLORS[i+2])
+                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=_RAINBOW_BANDS_COLORS[i+2])
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 

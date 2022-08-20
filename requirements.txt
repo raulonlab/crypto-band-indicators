@@ -13,6 +13,7 @@ pytest-runner==6.0.0
 ipykernel==6.15.1
 setuptools>=60.5.0
 wheel>=0.37.1
+mkinit==0.3.4
 
 # Include install_requires from setup.py in --editable mode (development)
 # -e .

@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import backtrader as bt
 from datetime import datetime, date, timedelta
-from cryptowatsonindicators.utils.utils import parse_any_date
+from cryptowatson_indicators.utils import parse_any_date
 
 
 class DataSourceBase:

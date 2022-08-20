@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime, date
 from .alternative import get_fng_history
 from .data_source_base import DataSourceBase
-from cryptowatsonindicators.utils import parse_any_date
+from cryptowatson_indicators.utils import parse_any_date
 
 
 class FngDataSource(DataSourceBase):

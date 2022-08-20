@@ -1,5 +1,4 @@
-import backtrader as bt
-from cryptowatsonindicators import datas
+from cryptowatson_indicators import datas
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
 

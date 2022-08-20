@@ -23,8 +23,13 @@ install-ipython-kernel: venv
 test: venv
 	. ${VENV_NAME}/bin/activate; python3 setup.py pytest
 
+### autogenerate imports in __init__.py files. --noattrs --nomods --relative --recursive
+mkinit: venv
+	. ${VENV_NAME}/bin/activate; mkinit cryptowatson_indicators --nomods --relative --recursive  -w
+	. ${VENV_NAME}/bin/activate; mkinit cryptowatson_indicators -w
+
 ### activate environment, install requirements and build package
-build: venv
+build: mkinit
 	. ${VENV_NAME}/bin/activate; python3 setup.py bdist_wheel
 
 ### Clean logs and resources

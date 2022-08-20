@@ -7,6 +7,7 @@ import datetime
 import typing
 from typing import Union, Optional, List, Dict
 Timestamp = Union[datetime.datetime, datetime.date, int, float]
+requests.packages.urllib3.disable_warnings()
 
 # API:
 _URL_ALTERNATIVE_FNG = 'https://api.alternative.me/fng/?limit={}'

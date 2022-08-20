@@ -5,18 +5,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from cryptowatsonindicators import datas, utils
+from cryptowatson_indicators.datas import FngDataSource
+from cryptowatson_indicators import utils 
 
 # 0-25: Extreme Fear
 # 26-46: Fear
 # 47-54: Neutral
 # 55-75: Greed
 # 76-100: Extreme Greed
-FNG_THRESHOLDS = [25,             46,        54,        75,        100]
-FNG_NAMES = ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
+_FNG_THRESHOLDS = [25,             46,        54,        75,        100]
+_FNG_NAMES = ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
 # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
-FNG_COLORS = ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
-FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
+_FNG_COLORS = ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
+_FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
 
 class FngIndicator:
@@ -29,7 +30,7 @@ class FngIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = datas.FngDataSource().to_dataframe(start=indicator_start_date)
+            self.indicator_data = FngDataSource().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngIndicator.constructor: No indicator data available"
@@ -66,23 +67,23 @@ class FngIndicator:
 
         # Get index
         index = 0
-        if (0 <= value < FNG_THRESHOLDS[0]):
+        if (0 <= value < _FNG_THRESHOLDS[0]):
             index = 0
-        elif (FNG_THRESHOLDS[0] <= value < FNG_THRESHOLDS[1]):
+        elif (_FNG_THRESHOLDS[0] <= value < _FNG_THRESHOLDS[1]):
             index = 1
-        elif (FNG_THRESHOLDS[1] <= value <= FNG_THRESHOLDS[2]):
+        elif (_FNG_THRESHOLDS[1] <= value <= _FNG_THRESHOLDS[2]):
             index = 2
-        elif (FNG_THRESHOLDS[2] < value <= FNG_THRESHOLDS[3]):
+        elif (_FNG_THRESHOLDS[2] < value <= _FNG_THRESHOLDS[3]):
             index = 3
-        elif (FNG_THRESHOLDS[3] < value <= FNG_THRESHOLDS[4]):
+        elif (_FNG_THRESHOLDS[3] < value <= _FNG_THRESHOLDS[4]):
             index = 4
 
         return {
             'fng_index': index,
             'fng_ordinal': f"{index + 1}/5",
-            'name': FNG_NAMES[index],
-            'color': FNG_COLORS[index],
-            'multiplier': FNG_MULTIPLIERS[index],
+            'name': _FNG_NAMES[index],
+            'color': _FNG_COLORS[index],
+            'multiplier': _FNG_MULTIPLIERS[index],
         }
 
     def plot_fng(self):

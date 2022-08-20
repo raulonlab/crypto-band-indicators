@@ -1,12 +1,12 @@
 import backtrader as bt
-from cryptowatsonindicators import strategies, datas, RwaIndicator
+from cryptowatson_indicators import TickerDataSource, RwaWeightedAverageStrategy, RwaRebalanceStrategy, RwaIndicator
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
 
 # Global variables
 strategy = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
 ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
-start = '01/01/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+start = '01/01/2020'   # start date of the simulation. Ex: '01/08/2020' or None
 end = None           # end date of the simulation. Ex: '01/08/2020' or None
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period = 5              # Minimum period in days to place orders
@@ -28,7 +28,7 @@ run_backtrader_test = True
 run_plot_backtrader_result_test = True
 
 # Data sources
-ticker_data_source = datas.TickerDataSource()
+ticker_data_source = TickerDataSource()
 
 # Limit indicator series to start at specific date or None to use all the history
 indicator_start_date = None
@@ -62,10 +62,10 @@ def backtrader_test():
     cerebro = bt.Cerebro(stdstats=False)
 
     if strategy == "weighted_dca":
-        cerebro.addstrategy(strategies.RwaWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
+        cerebro.addstrategy(RwaWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
                             min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
     elif strategy == "rebalance":
-        cerebro.addstrategy(strategies.RwaRebalanceStrategy, min_order_period=min_order_period,
+        cerebro.addstrategy(RwaRebalanceStrategy, min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, log=log, debug=debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"

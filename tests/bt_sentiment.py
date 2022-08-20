@@ -1,6 +1,6 @@
 import datetime
 import backtrader as bt
-from cryptowatsonindicators import strategies
+from cryptowatson_indicators import strategies
 
 # Instantiate Cerebro engine
 cerebro = bt.Cerebro()

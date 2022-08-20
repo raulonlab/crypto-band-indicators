@@ -1,5 +1,7 @@
 import backtrader as bt
-from cryptowatsonindicators import strategies, datas, FngIndicator
+from cryptowatson_indicators.backtrader import FngWeightedAverageStrategy, FngRebalanceStrategy
+from cryptowatson_indicators.datas import TickerDataSource, FngDataSource
+from cryptowatson_indicators.indicators import FngIndicator
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
 
@@ -27,8 +29,8 @@ run_backtrader_test = True
 run_plot_backtrader_result_test = True
 
 # Data sources
-ticker_data_source = datas.TickerDataSource()
-fng_data_source = datas.FngDataSource()
+ticker_data_source = TickerDataSource()
+fng_data_source = FngDataSource()
 
 # Fng Indicator with 'fng' data
 fng = FngIndicator(fng_data_source.to_dataframe(), ticker_symbol=ticker_symbol)
@@ -61,10 +63,10 @@ def backtrader_test():
     cerebro = bt.Cerebro(stdstats=False)
 
     if strategy == "weighted_dca":
-        cerebro.addstrategy(strategies.FngWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
+        cerebro.addstrategy(FngWeightedAverageStrategy, weighted_buy_amount=weighted_buy_amount,
                             min_order_period=min_order_period, weighted_multipliers=weighted_multipliers, log=log, debug=debug)
     elif strategy == "rebalance":
-        cerebro.addstrategy(strategies.FngRebalanceStrategy, min_order_period=min_order_period,
+        cerebro.addstrategy(FngRebalanceStrategy, min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, log=log, debug=debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"

@@ -1,6 +1,7 @@
 from datetime import timedelta
 import backtrader as bt
-from cryptowatsonindicators import RwaIndicator, utils
+from cryptowatson_indicators.indicators import RwaIndicator
+from cryptowatson_indicators import utils
 from .base_strategy import OrderLoggerStrategy
 
 
@@ -13,12 +14,12 @@ class RwaIndicatorWrapper(bt.Indicator, RwaIndicator):
         band_index = self.get_rainbow_band_index(
             price=self.data.close[0], at_date=self.data.datetime.date())
 
-        if not band_index:
-            band_index = self.last_valid_band_index
+        # if not band_index:
+        #     band_index = self.last_valid_band_index
 
         self.lines.band_index[0] = int(band_index)
 
-        self.last_valid_band_index = band_index
+        # self.last_valid_band_index = band_index
 
 
 class RwaWeightedAverageStrategy(OrderLoggerStrategy):
@@ -64,7 +65,7 @@ class RwaWeightedAverageStrategy(OrderLoggerStrategy):
             self.params.weighted_multipliers[rwa_info.get('band_index', 2)]
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
-            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Band: {rwa_info['band_ordinal']} - {rwa_info['name']}, 1 BTC = {self.price[0]:.4f} USD", log_color=utils.LogColors.BOLD)
+            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Band: {rwa_info['band_ordinal']} - {rwa_info['name']}, 1 BTC = {self.price[0]:.4f} USD", log_color=utils.LogColors.BOLDBUY)
 
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=buy_btc_size)

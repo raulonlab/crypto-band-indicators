@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 import pandas as pd
 import backtrader as bt
 from datetime import datetime, date
-from cryptowatsonindicators.utils import parse_any_date
+from cryptowatson_indicators.utils import parse_any_date
 
 
 class DataSourceLoader:
