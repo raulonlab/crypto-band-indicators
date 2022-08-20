@@ -2,38 +2,6 @@ from datetime import timedelta
 import backtrader as bt
 from cryptowatsonindicators import FngIndicator, utils
 from .base_strategy import OrderLoggerStrategy
-import pprint
-pprint = pprint.PrettyPrinter(
-    indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
-
-# class FngIndicatorWrapper(bt.Indicator, FngIndicator):
-#     lines = ('fng_value', 'fng_av', 'fng_ma')
-
-#     params = (('ticker_symbol', 'BTCUSDT'),)
-
-#     def __init__(self):
-#         self.fng = FngIndicator()
-
-#         fng_data_feed = bt.feeds.PandasData(
-#             dataname=self.fng.indicator_data,
-#             datetime=0,
-#             high=None,
-#             low=None,
-#             open=None,
-#             close=1,    # uses the column 1 ('Value') as close price
-#             volume=None,
-#             openinterest=None,
-#         )
-
-
-#     def next(self):
-#         fng_value = self.fng.get_fng_value(at_date=self.data.datetime.date())
-
-#         if not fng_value:
-#             fng_value = self.last_valid_fng_value
-
-#         self.lines.fng_value[0] = int(fng_value)
-#         self.last_valid_fng_value = fng_value
 
 
 class FngWeightedAverageStrategy(OrderLoggerStrategy):

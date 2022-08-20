@@ -1,8 +1,7 @@
 import backtrader as bt
 from cryptowatsonindicators import datas
 import pprint
-pprint = pprint.PrettyPrinter(
-    indent=2, sort_dicts=False, compact=False).pprint   # pprint with defaults
+pprint = pprint.PrettyPrinter(indent=2).pprint
 
 
 def test():
