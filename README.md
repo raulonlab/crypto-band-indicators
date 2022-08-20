@@ -1,67 +1,91 @@
 # cryptowatson-indicators
 
-Python package to calculate crypto indicators and run trading simulations
+Implementation of crypto trading indicators and strategies based on the indexes `Fear and Greed` and `Rainbow Price`.
 
-### Cryptocurrency indicators
+Also includes simulators (backtests) of the strategies in Jupyter notebooks (using [backtrader](https://www.backtrader.com/)):
 
-### Rainbow Weighted Average
+- Fear and Greed simulator [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
 
-Rainbow-Weighted Averagin (RWA) is a variation of the traditional Dollar Cost Average (DCA) method of investing that takes into account the current Rainbox Index. The idea comes from [this post in Reddit by the user u/pseudoHappyHippy](https://www.reddit.com/r/CryptoCurrency/comments/qg9s6v/introducing_rainbowweighted_averaging_a_more/). The author claims that RWA outperforms DCA 96.8% of the time by an average of 35.3% greater returns when applied to historical BTC price data
+- Rainbow simulator [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/rwa_simulator.ipynb)
 
-- BTC Rainbow chart: 
-    - [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-rainbow-chart/)
-    - [Bitcoin Rainbow Chart (Live) - Blockchaincenter](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)
+## Indicators
 
-- [Bitcoin Logarithmic Growth Curves @ lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-logarithmic-growth-curve/)
-  
-- ETH Rainbow chart: [Ethereum Rainbow Chart - Blockchaincenter](https://www.blockchaincenter.net/ethereum-rainbow-chart/)
+### Rainbow Chart
 
+The Rainbow Chart is a long-term valuation tool for Bitcoin. It uses a logarithmic growth curve to forecast the potential future price direction of Bitcoin.
 
-### Fear and Greed Index
+It overlays rainbow color bands on top of the logarithmic growth curve channel in an attempt to highlight market sentiment at each rainbow color stage as price moves through it. Therefore highlighting potential opportunities to buy or sell.
+
+See a live version for Bitcoin in [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-rainbow-chart/) or [blockchaincenter](https://www.blockchaincenter.net/en/bitcoin-rainbow-chart/)
+
+And for Ethereum in [blockchaincenter](https://www.blockchaincenter.net/ethereum-rainbow-chart/)
+
+The Rainbow Chart is divided in 9 bands. being the 1st the worst to buy (expensive), and the 9th the best (cheap):
+
+1. Maximum bubble!!
+2. Sell, seriouly sell!
+3. FOMO intensifies
+4. Is this a bubble?
+5. HODL
+6. Still cheap
+7. Accumulate
+8. Buy!
+9. Fire sale!!
+
+### Fear and Greed
 
 The Fear and Greed Index is a tool that helps investors and traders analyze the Bitcoin and Crypto market from a sentiment perspective. It identifies the extent to which the market is becoming overly fearful or overly greedy. Hence why it is called the Fear and Greed Index.
 
-- Fear And Greed Index, by lookintobitcoin: https://www.lookintobitcoin.com/charts/bitcoin-fear-and-greed-index/
+- See the live version for Bitcoin in [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-fear-and-greed-index/)
 
-### Backtrading for backtesting
-- [Backtrader for backtesting @ algotrading101](https://algotrading101.com/learn/backtrader-for-backtesting/)
-- https://www.backtrader.com/docu/concepts/#before-starting
+The Fear and Greed index has a value in the range (0, 100) and is divided in 5 bands, being the 1st the best to buy (Fear), and the 5th the worst (Greed):
 
-### Resources
+1. ( 0-25):  Extreme Fear
+2. (26-46):  Fear
+3. (47-54):  Neutral
+4. (55-75):  Greed
+5. (76-100): Extreme Greed
 
-- [Part 1 - Using Python to Analyze Rainbow-Weighted Averaging — A More Profitable Frequency Investment Strategy](https://medium.com/coinmonks/using-python-to-analyze-rainbow-weighted-averaging-a-more-profitable-frequency-investment-12009a8c3617)
+## Strategies
 
-- [Part 2 - Creating a Rainbow Weighted Average Trading bot with Python](https://blog.devgenius.io/creating-a-rainbow-weighted-average-trading-bot-with-python-99f13642a2c9)
-    - Source code: https://github.com/Totesthegoats/rwa_bot
-    - RWA strategy revisited: https://medium.com/@chris_42047/the-rainbow-weighted-average-strategy-revisited-afb02b45aead
-    - Logarithmic (non-linear) regression - Bitcoin estimated value @ bitcointalk.org: https://bitcointalk.org/index.php?topic=831547
+### Weighted Averaging DCA
 
-- [Logarithmic Regression in Python (Step-by-Step)](https://www.statology.org/logarithmic-regression-python/) and [Logarithmic regression calculator](https://www.statology.org/logarithmic-regression-calculator/)
+Variation of the traditional Dollar Cost Average (DCA) method of investing that takes into account the current indicator index. The better index, the bigger the amount of BTC purchased.
 
-- Fear and Greed Index API: https://alternative.me/crypto/fear-and-greed-index/#api
+The idea of applying this strategy with the Rainbow index comes from [this post in Reddit by the user u/pseudoHappyHippy](https://www.reddit.com/r/CryptoCurrency/comments/qg9s6v/introducing_rainbowweighted_averaging_a_more/). The author claims that RWA (Rainbow Weighted Averaging) outperforms DCA 96.8% of the time by an average of 35.3% greater returns when applied to historical BTC price data.
 
-- [What is a Walk-Forward Optimization and How to Run It?](https://algotrading101.com/learn/walk-forward-optimization/)
+#### Parameters
 
-- CahrtSchool: https://school.stockcharts.com/doku.php?id=technical_indicators
+- **weighted_buy_amount**: Amount base to buy, as in standard DCA
+- **weighted_multipliers**: Amount multipliers (weighted) for each band. Ex: [1.5, 1.25, 1, 0.75, 0.5]
+- **min_order_period**: Interval of days between periodical orders. Ex: 5
 
-- Portfolio analytics for quants, written in Python: https://github.com/ranaroussi/quantstats
+### Rebalance 
 
-- using GitHub (or other providers) as a PyPy Server: https://www.freecodecamp.org/news/how-to-use-github-as-a-pypi-server-1c3b0d07db2
+Applies a rebalance percentage of the position between BTC and USDT depending on the indicator index. The better index, the more percentage of BTC against USDT is kept in the wallet over the total value in USDT.
 
-- Run Jupyter notebooks online:
-    - https://mybinder.org/
-        - Python package with setup.py: https://mybinder.readthedocs.io/en/latest/examples/sample_repos.html?highlight=requirements#python-package-with-setup-py
-    - https://colab.research.google.com/
-    - http://cocalc.com/
-    - https://github.com/features/codespaces
+#### Parameters
+- **rebalance_percents**: Rebalance percentages of BTC over USDT for each band. Ex: [85, 65, 50, 15, 10]
+- **min_order_period**: Minimum interval of days between consecutive orders. Ex: 5
 
-# Notes
+## Simulators
 
-- Alternative API misses these dates:
-merged = pd.merge(fng_data, ticker_data, how='outer', on='Date')
-print('merged:\n', merged)
-1646 2018-04-14      NaN           NaN   8036.511051
-1647 2018-04-15      NaN           NaN   8340.748333
-1648 2018-04-16      NaN           NaN   8368.100000
+The simulators are coded in Jupyter notebooks and can be open on Google Collab with these links:
 
+-[Open Fear and Greed simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
 
+- [Open Rainbow simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/rwa_simulator.ipynb)
+
+Change the value of these variables, at the top of the notebook, to customize the simulation. 
+
+```
+strategy             = "weighted_dca"    # Select strategy between "weighted_dca" and "rebalance"
+ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
+start                = '01/03/2022'   # start date of the simulation. Ex: '01/08/2020' or None
+end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
+initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
+min_order_period     = 7              # Used in weighted_dca and rebalance strategies
+weighted_buy_amount  = 100            # Used in weighted_dca strategy
+weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # Used in weighted_dca strategy
+rebalance_percents   = [85, 65, 50, 15, 10]         # Used in rebalance strategy
+```
