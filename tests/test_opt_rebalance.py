@@ -1,7 +1,8 @@
 import pandas as pd
 import backtrader as bt
-from cryptowatson_indicators.backtrader import RebalanceStrategy, HodlStrategy, FngBandIndicatorWrapper, RainbowBandIndicatorWrapper
+from cryptowatson_indicators.backtrader import RebalanceStrategy, HodlStrategy
 from cryptowatson_indicators.datas import TickerDataSource
+from cryptowatson_indicators.indicators import FngBandIndicator, RainbowBandIndicator
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
@@ -10,22 +11,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Variables ################
+# Fixed variables ################
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
-start = '01/01/2020'   # start date of the simulation. Ex: '01/08/2020' or None
-end = '31/07/2020'           # end date of the simulation. Ex: '01/08/2020' or None
 fng_rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each index
 rainbow_rebalance_percents = [0, 10, 20, 30, 50, 70, 80, 80, 100]
 
 # Range variables (to compare optimization)
 min_order_period_list = range(4, 8)              # Minimum period in days to place orders
 ma_class_list = [bt.ind.WeightedMovingAverage, bt.ind.MovingAverageSimple]
-
-# fng_indicator_params_list = ({}, )
-fng_indicator_params_list = [{'ma_kind': 'wma', 'ma_period': i} for i in range(3, 6)]
-
-rainbow_indicator_params_list = ({}, )
-# rainbow_indicator_params_list = [{'ma_kind': 'wma', 'ma_period': i} for i in range(3, 6)]
 
 # Data sources
 ticker_data_source = TickerDataSource().load()
@@ -47,7 +40,7 @@ def run_hodl(start, end):
 
     return cerebro_results
 
-def run_opt_rebalance(start, end, min_order_period, ma_class, indicator_class, indicator_params, rebalance_percents):
+def run_opt_rebalance(start, end, band_indicator, min_order_period, ma_class, rebalance_percents):
     cerebro = bt.Cerebro(stdstats=False, maxcpus=0, runonce=True, exactbars=False, optdatas=True)
     cerebro.broker.set_coc(True)
 
@@ -55,11 +48,10 @@ def run_opt_rebalance(start, end, min_order_period, ma_class, indicator_class, i
     ticker_data_feed = ticker_data_source.to_backtrade_feed(start, end)
     cerebro.adddata(ticker_data_feed)
 
-    cerebro.optstrategy(RebalanceStrategy, 
+    cerebro.optstrategy(RebalanceStrategy,
+                        band_indicator=band_indicator,  
                         min_order_period=min_order_period, 
                         ma_class=ma_class, 
-                        indicator_class=indicator_class, 
-                        indicator_params=indicator_params, 
                         rebalance_percents=rebalance_percents, 
                         log=(False,),
                         debug=(False,))
@@ -81,13 +73,15 @@ def run_between_dates(start, end):
         results.append(strategy.describe())
 
     # With FnG indicator
-    cerebro_results = run_opt_rebalance(start, end, min_order_period=min_order_period_list, ma_class=ma_class_list, indicator_class=(FngBandIndicatorWrapper,), indicator_params=fng_indicator_params_list, rebalance_percents=(fng_rebalance_percents,))
+    fng_indicator = FngBandIndicator()
+    cerebro_results = run_opt_rebalance(start, end, min_order_period=min_order_period_list, ma_class=ma_class_list, band_indicator=(fng_indicator,), rebalance_percents=(fng_rebalance_percents,))
     for strategy_results in cerebro_results:
         for strategy in strategy_results:
             results.append(strategy.describe())
 
     # With Rainbow indicator
-    cerebro_results = run_opt_rebalance(start, end, min_order_period=min_order_period_list, ma_class=ma_class_list, indicator_class=(RainbowBandIndicatorWrapper,), indicator_params=rainbow_indicator_params_list, rebalance_percents=(rainbow_rebalance_percents,))
+    rainbow_indicator = RainbowBandIndicator()
+    cerebro_results = run_opt_rebalance(start, end, min_order_period=min_order_period_list, ma_class=ma_class_list, band_indicator=(rainbow_indicator,), rebalance_percents=(rainbow_rebalance_percents,))
     for strategy_results in cerebro_results:
         for strategy in strategy_results:
             results.append(strategy.describe())
@@ -96,7 +90,7 @@ def run_between_dates(start, end):
     results_df = results_df.sort_values('pnl_value', ascending=False)
 
     results_df['pnl'] = results_df.apply(lambda row: f"{row['pnl_value']:+.2f}({row['pnl_percent']:+.2f})", axis=1)
-    results_df['params'] = results_df.apply(lambda row: f"{row['min_order_period']:<2}|{row['rebalance_percents']}|{row['ma_class']}|ind:{row['indicator_params']}", axis=1)
+    results_df['params'] = results_df.apply(lambda row: f"{row['min_order_period']:<2}|{row['rebalance_percents']}|{row['ma_class']}", axis=1)
 
     print_columns = ["name", "pnl", "params"]
     print(tabulate(results_df[print_columns], tablefmt="fancy_grid", headers=print_columns, showindex=False))

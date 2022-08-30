@@ -1,6 +1,5 @@
 import backtrader as bt
 from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
-from cryptowatson_indicators.backtrader.indicator_wrappers import RainbowBandIndicatorWrapper
 from cryptowatson_indicators.datas import TickerDataSource
 from cryptowatson_indicators.indicators import RainbowBandIndicator
 from cryptowatson_indicators.utils.utils import LogColors
@@ -23,7 +22,6 @@ rebalance_percents = [10, 20, 30, 40, 50, 60, 70, 80, 90]   # rebalance percenta
 ma_class = None
 # ma_class = bt.ind.WeightedMovingAverage
 # ma_class = bt.ind.MovingAverageSimple
-indicator_params = {}   # indicator ma config: use a ma value instead of the raw value
 
 # logging
 log = True
@@ -38,8 +36,7 @@ run_plot_backtrader_result_test = True
 # Data sources
 ticker_data_source = TickerDataSource().load()
 
-# Limit indicator series to start at specific date or None to use all the history
-indicator_start_date = None
+# Rainbow indicator
 rainbow = RainbowBandIndicator(ticker_data_source.to_dataframe())
 
 def get_value_test():
@@ -70,8 +67,7 @@ def backtrader_test():
     if strategy == "weighted_dca":
         cerebro.addstrategy(WeightedDCAStrategy, 
                             ma_class=ma_class,
-                            indicator_class=RainbowBandIndicatorWrapper,
-                            indicator_params=indicator_params,
+                            band_indicator=rainbow,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -80,8 +76,7 @@ def backtrader_test():
     elif strategy == "rebalance":
         cerebro.addstrategy(RebalanceStrategy, 
                             ma_class=ma_class,
-                            indicator_class=RainbowBandIndicatorWrapper, 
-                            indicator_params=indicator_params,
+                            band_indicator=rainbow,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             log=log, 

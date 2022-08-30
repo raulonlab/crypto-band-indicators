@@ -13,24 +13,18 @@ from .base_strategy import CryptoStrategy
 class WeightedDCAStrategy(CryptoStrategy):
     # list of parameters which are configurable for the strategy
     params = dict(
+        band_indicator=None,
         base_buy_amount=100,   # amount base to buy, to be multiplied by weighted multiplier
         min_order_period=7,        # number of days between buys
         weighted_multipliers=[1],  # multiplier to apply depending on indicator index
-        indicator_class=None,           # band indicator class
-        indicator_params={},          # band indicator parameters
         ma_class=None,
     )
 
     def __init__(self):
         super().__init__()
 
-        if not issubclass(self.params.indicator_class, BandIndicatorWrapper):
-            raise exception('indicator_class parameter must be a BandIndicatorWrapper')
+        self.indicator = BandIndicatorWrapper(band_indicator=self.params.band_indicator)
 
-        # if self.params.indicator_params is None:
-        #     self.params.indicator_params = {}
-        self.indicator = self.params.indicator_class(**self.params.indicator_params)
-        
         # Add ma
         if self.params.ma_class is not None:
             self.ma = self.params.ma_class(period=self.params.min_order_period)    # self.params.min_order_period
@@ -47,9 +41,8 @@ class WeightedDCAStrategy(CryptoStrategy):
         self_dict['min_order_period'] = self.params.min_order_period
         self_dict['weighted_multipliers'] = ','.join([str(multiplier) for multiplier in self.params.weighted_multipliers])
         self_dict['ma_class'] = None if self.params.ma_class is None else ''.join([char for char in self.params.ma_class.__name__ if char.isupper()])
-        self_dict['indicator_class'] = self.params.indicator_class.__name__
-        self_dict['indicator_params'] = None if self.params.indicator_params is None else f"{self.params.indicator_params.get('ma_kind', '-')}-{self.params.indicator_params.get('ma_period', '-')}"
 
+        return self_dict
 
     def next(self):
         # An order is pending ... nothing can be done

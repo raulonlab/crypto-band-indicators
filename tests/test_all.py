@@ -1,6 +1,7 @@
 import backtrader as bt
-from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy, FngBandIndicatorWrapper, RainbowBandIndicatorWrapper
+from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
 from cryptowatson_indicators.datas import TickerDataSource
+from cryptowatson_indicators.indicators import FngBandIndicator, RainbowBandIndicator
 from cryptowatson_indicators.utils.utils import LogColors
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
@@ -12,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Global variables
-strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
+strategy = "weighted_dca"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
 indicator = "fng"         # Select indicator between "fng" and "rainbow"
 ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
 start = '01/08/2020'
@@ -24,10 +25,6 @@ ma_class = None
 # ma_class = bt.ind.WeightedMovingAverage
 # ma_class = bt.ind.MovingAverageSimple
 
-# indicator ma config: use a ma value instead of the raw value
-indicator_params = {}
-# indicator_params = {'ma_kind': 'wma', 'ma_period': 3}
-
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rainbow_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
 
@@ -35,37 +32,36 @@ fng_rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each
 rainbow_rebalance_percents = [0, 10, 20, 30, 50, 70, 80, 80, 100]
 
 # logging
-log = False
+log = True
 debug = False
 
 # Enable / diable parts to bo tested
 run_backtrader_test = True
 run_plot_backtrader_result_test = True
 
-# Data sources
+# Ticker data source
 ticker_data_source = TickerDataSource().load()
 
 def backtrader_test():
     cerebro = bt.Cerebro(stdstats=True, runonce=True)
     cerebro.broker.set_coc(True)
 
+    band_indicator = FngBandIndicator() if indicator == "fng" else RainbowBandIndicator()
+
     if strategy == "weighted_dca":
         # WeightedDCAStrategy
-        indicator_class = FngBandIndicatorWrapper if indicator == "fng" else RainbowBandIndicatorWrapper
         weighted_multipliers = fng_weighted_multipliers if indicator == "fng" else rainbow_weighted_multipliers
         cerebro.addstrategy(WeightedDCAStrategy, 
+                            band_indicator=band_indicator,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
-                            indicator_class=indicator_class, 
                             log=log, 
                             debug=debug)
     elif strategy == "rebalance":
-        indicator_class = FngBandIndicatorWrapper if indicator == "fng" else RainbowBandIndicatorWrapper
         rebalance_percents = fng_rebalance_percents if indicator == "fng" else rainbow_rebalance_percents
         cerebro.addstrategy(RebalanceStrategy, 
-                            indicator_class=indicator_class, 
-                            indicator_params=indicator_params, 
+                            band_indicator=band_indicator,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             ma_class=ma_class, 
@@ -88,11 +84,8 @@ def backtrader_test():
         print(f"Error: {error_message}")
         return
 
-    # Get data feed
-    ticker_data_feed = ticker_data_source.to_backtrade_feed(start, end)
-
     # Add the data to Cerebro
-    cerebro.adddata(ticker_data_feed)
+    cerebro.adddata(ticker_data_source.to_backtrade_feed(start, end))
 
     # Add cash to the virtual broker
     cerebro.broker.setcash(initial_cash)    # default: 10k

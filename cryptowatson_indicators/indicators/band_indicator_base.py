@@ -47,16 +47,13 @@ class BandIndicatorBase:
     #         error_message = f"FngBandIndicator.constructor: No indicator data available"
     #         print(f"[error] {error_message}")
     #         raise exception(error_message)
-
-    # def get_current_band(self) -> Union[int, None]:
-    #     return self.get_band_at(at_date=None)
     
-    def get_band_at(self, at_date) -> Union[int, None]:
+    def get_band_at(self) -> Union[int, None]:
         pass
 
-    def get_band_details_at(self, at_date) -> Union[BandDetails, None]:
+    def get_band_details_at(self) -> Union[BandDetails, None]:
         pass
 
-    def plot_axes(self, axes, start=None, end=None):
+    def plot_axes(self):
         pass
 

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.optimize import curve_fit
 from cryptowatson_indicators.datas import TickerDataSource
-from cryptowatson_indicators.indicators.band_indicator_base import BandDetails
+from .band_indicator_base import BandIndicatorBase, BandDetails
 from ..utils import utils
 
 # _RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
@@ -22,7 +22,7 @@ _FITTED_BAND_LOG_MULTIPLIER = .455
 def _rainbow_logarithmic_function(x, a, b, c):
         return a*np.log(b+x) + c
 
-class RainbowBandIndicator:
+class RainbowBandIndicator(BandIndicatorBase):
     _band_thresholds= []
     _band_names=      ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
                         "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
@@ -40,7 +40,7 @@ class RainbowBandIndicator:
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = TickerDataSource().to_dataframe(start=indicator_start_date)
+            self.indicator_data = TickerDataSource().load().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"RainbowBandIndicator.constructor: No indicator data available"
@@ -190,6 +190,9 @@ class RainbowBandIndicator:
         # axes.legend()
 
         return axes
+    
+    def __str__(self):
+        return 'Rainbow'
 
     def plot_rainbow(self):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
@@ -240,11 +243,4 @@ class RainbowBandIndicator:
 
         # axes2.axvline(x=self.indicator_data.index.max(), color='#333333', linewidth=1)  # label='Today'
 
-        # Show plot
-        plt.rcParams['figure.figsize'] = [12, 8]
-        # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.rcParams['figure.dpi'] = 200
-        plt.rcParams['savefig.dpi'] = 200
-        # plt.rcParams["figure.autolayout"] = True
-        # fig.subplots_adjust(hspace=0.2)
         plt.show()

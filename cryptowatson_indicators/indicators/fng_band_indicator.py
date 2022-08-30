@@ -36,14 +36,14 @@ class FngBandIndicator(BandIndicatorBase):
         if isinstance(data, pd.DataFrame):
             self.indicator_data = data
         else:
-            self.indicator_data = FngDataSource().to_dataframe(start=indicator_start_date)
+            self.indicator_data = FngDataSource().load().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngBandIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
 
-    def get_band_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
+    def get_band_at(self, at_date: Union[str, date, datetime, None] = None, **kvargs) -> Union[int, None]:
         value_at = self.get_value_at(at_date=at_date)
 
         if (value_at is None or value_at < 0 or value_at > 100):
@@ -64,7 +64,7 @@ class FngBandIndicator(BandIndicatorBase):
 
         return band_index_at
 
-    def get_band_details_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[BandDetails, None]:
+    def get_band_details_at(self, at_date: Union[str, date, datetime, None] = None, **kvargs) -> Union[BandDetails, None]:
         band_index = self.get_band_at(at_date=at_date)
         
         if (band_index is None or band_index < 0 or band_index > len(self._band_names) -1):
@@ -79,7 +79,7 @@ class FngBandIndicator(BandIndicatorBase):
 
         return band_details_at
 
-    def get_value_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
+    def get_value_at(self, at_date: Union[str, date, datetime, None] = None, **kvargs) -> Union[int, None]:
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] FngBandIndicator.get_value_at: No indicator data available")
             return None
@@ -148,6 +148,8 @@ class FngBandIndicator(BandIndicatorBase):
 
         return axes
 
+    def __str__(self):
+        return 'Fear and Greed'
 
     # @classmethod
     # def _get_fng_value_details(cls, value: int = -1) -> dict:
@@ -227,11 +229,6 @@ class FngBandIndicator(BandIndicatorBase):
         # ax.bar_label(p2, label_type='center')
         # ax.bar_label(p2)
 
-        # Show plot
-        plt.rcParams['figure.figsize'] = [12, 8]
-        # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.rcParams['figure.dpi'] = 200
-        plt.rcParams['savefig.dpi'] = 200
         plt.show()
 
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
@@ -306,14 +303,6 @@ class FngBandIndicator(BandIndicatorBase):
         # ticker_latest_value = ticker_data.iloc[-1, 1]
         # axes2.axhline(y=ticker_latest_value, color='#dedede', linewidth=0.5, linestyle='--', zorder=-1)
 
-        # Show plot
-        plt.rcParams['figure.figsize'] = [12, 8]
-        # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.rcParams['figure.dpi'] = 200
-        plt.rcParams['savefig.dpi'] = 200
-        # plt.rcParams["figure.autolayout"] = True
-        # fig.subplots_adjust(hspace=0.2)
-        # plt.tight_layout()
         plt.show()
 
     def plot_fng_and_ticker_price_2(self, ticker_data: pd.DataFrame):
@@ -408,12 +397,4 @@ class FngBandIndicator(BandIndicatorBase):
         ticker_axes.axhline(y=ticker_max_value, color='#dedede',
                             linewidth=0.5, linestyle='--', zorder=-1)
 
-        # Show plot
-        plt.rcParams['figure.figsize'] = [12, 8]
-        # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
-        plt.rcParams['figure.dpi'] = 200
-        plt.rcParams['savefig.dpi'] = 200
-        # plt.rcParams["figure.autolayout"] = True
-        # fig.subplots_adjust(hspace=0.2)
-        # plt.tight_layout()
         plt.show()

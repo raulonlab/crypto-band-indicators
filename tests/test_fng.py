@@ -1,6 +1,5 @@
 import backtrader as bt
 from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
-from cryptowatson_indicators.backtrader.indicator_wrappers import FngBandIndicatorWrapper
 from cryptowatson_indicators.datas import TickerDataSource, FngDataSource
 from cryptowatson_indicators.indicators import FngBandIndicator
 from cryptowatson_indicators.utils.utils import LogColors
@@ -14,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Variables #########################
-strategy = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
+strategy = "weighted_dca"    # Select strategy between "weighted_dca" and "rebalance"
 start = '01/01/2021'   # start date of the simulation. Ex: '01/08/2020' or None
 end = '31/08/2021'           # end date of the simulation. Ex: '01/08/2020' or None
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
@@ -25,7 +24,6 @@ rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each ind
 ma_class = None
 # ma_class = bt.ind.WeightedMovingAverage
 # ma_class = bt.ind.MovingAverageSimple
-indicator_params = {}   # indicator ma config: use a ma value instead of the raw value
 
 # logging
 log = True
@@ -39,10 +37,9 @@ run_plot_backtrader_result_test = True
 
 # Data sources
 ticker_data_source = TickerDataSource().load()
-fng_data_source = FngDataSource().load()
 
-# Fng Indicator with 'fng' data
-fng = FngBandIndicator(fng_data_source.to_dataframe())
+# Fng Indicator 
+fng = FngBandIndicator()
 
 def get_value_test():
     # Get Current Fear and Greed index
@@ -72,8 +69,7 @@ def backtrader_test():
     if strategy == "weighted_dca":
         cerebro.addstrategy(WeightedDCAStrategy, 
                             ma_class=ma_class,
-                            indicator_class=FngBandIndicatorWrapper,
-                            indicator_params=indicator_params, 
+                            band_indicator=fng,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -82,8 +78,7 @@ def backtrader_test():
     elif strategy == "rebalance":
         cerebro.addstrategy(RebalanceStrategy, 
                             ma_class=ma_class,
-                            indicator_class=FngBandIndicatorWrapper,
-                            indicator_params=indicator_params, 
+                            band_indicator=fng, 
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             log=log, 
