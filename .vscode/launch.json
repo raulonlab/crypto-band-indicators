@@ -29,6 +29,22 @@
             "justMyCode": true
         },
         {
+            "name": "Python: tests/bt_all.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${cwd}/tests/bt_all.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: tests/bt_opt_rebalance.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${cwd}/tests/bt_opt_rebalance.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",

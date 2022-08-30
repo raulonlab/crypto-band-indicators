@@ -3,21 +3,24 @@ from datetime import datetime, date, time
 
 
 class LogColors:
-    HEADER = '\033[95m'
     BOLD = '\033[1m'
     DEBUG = '\033[2m'
     BUY = '\033[92m'
     SELL = '\033[93m'
+    STRATEGY = '\033[96m'
     BOLDBUY = '\033[1m\033[92m'
     BOLDSELL = '\033[1m\033[93m'
+    BOLDSTRATEGY = '\033[1m\033[96m'
 
     # Other colors
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
+    OK = '\033[92m'
+    WARNING = '\033[95m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
+
+class PlotColors:
+    GOLD = '#ffbf00'
 
 
 class Emojis:

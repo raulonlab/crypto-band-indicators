@@ -1,12 +1,12 @@
 from logging import exception
-from typing import Union
+from typing import Dict, Tuple, Union
 from datetime import datetime, date
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cryptowatson_indicators.datas import FngDataSource
-from cryptowatson_indicators import utils 
+from cryptowatson_indicators import utils
 
 # 0-25: Extreme Fear
 # 26-46: Fear
@@ -21,10 +21,11 @@ _FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
 
 class FngIndicator:
-    def __init__(self, data: Union[pd.DataFrame, None] = None, indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
+    def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
+        self.data_column = data_column
 
         # load indicator data
         if isinstance(data, pd.DataFrame):
@@ -36,6 +37,7 @@ class FngIndicator:
             error_message = f"FngIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
+
 
     def get_current_fng_value(self) -> Union[int, None]:
         return self.get_fng_value(at_date=None)
@@ -56,7 +58,7 @@ class FngIndicator:
                 f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date}")
             return None
 
-        fng_at_value = int(fng_at_serie['close'])
+        fng_at_value = int(fng_at_serie[self.data_column])
 
         return fng_at_value
 
@@ -85,6 +87,55 @@ class FngIndicator:
             'color': _FNG_COLORS[index],
             'multiplier': _FNG_MULTIPLIERS[index],
         }
+    
+    def plot_axes(self, axes, start=None, end=None):
+        plot_data = self.indicator_data
+        # Filter start and end
+        if start is not None:
+            plot_data = plot_data[plot_data.index >= start]
+        if end is not None:
+            plot_data = plot_data[plot_data.index <= end]
+
+        axes.set_ylabel('FnG Index', fontsize='medium')
+
+        range1 = plot_data[plot_data[self.data_column].between(
+            0, 25, inclusive='left')]
+        range2 = plot_data[plot_data[self.data_column].between(
+            25, 46, inclusive='left')]
+        range3 = plot_data[plot_data[self.data_column].between(
+            46, 54, inclusive='both')]
+        range4 = plot_data[plot_data[self.data_column].between(
+            54, 75, inclusive='right')]
+        range5 = plot_data[plot_data[self.data_column].between(
+            75, 100, inclusive='right')]
+
+        axes.bar(range1.index, range1[self.data_column],
+                 color='#C05840')  # , width, yerr=menStd
+        axes.bar(range2.index, range2[self.data_column],
+                 color='#FC9A24')  # , width, yerr=menStd
+        axes.bar(range3.index, range3[self.data_column],
+                 color='#E5C769')  # , width, yerr=menStd
+        axes.bar(range4.index, range4[self.data_column],
+                 color='#B4E168')  # , width, yerr=menStd
+        axes.bar(range5.index, range5[self.data_column],
+                 color='#5CBC3C')  # , width, yerr=menStd
+
+        # Plot MA line
+        # if ma_data_column is not None:
+        #     axes.plot(plot_data.index, plot_data[ma_data_column],
+        #             color='#000000', alpha=0.5, linewidth=1, label='FnG MA')
+
+        # yticks
+        axes.set_yticks(_FNG_THRESHOLDS)
+        axes.tick_params(axis='y', labelsize='x-small')
+
+        # Grid
+        axes.grid(axis = 'y', linestyle = '--', linewidth = 0.5)
+
+        # axes.legend()
+
+        return axes
+
 
     def plot_fng(self):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
@@ -94,26 +145,26 @@ class FngIndicator:
         fig, axes = plt.subplots()
 
         # Consider using pivot(): https://pandas.pydata.org/pandas-docs/dev/getting_started/intro_tutorials/09_timeseries.html#datetime-as-index
-        range1 = self.indicator_data[self.indicator_data['close'].between(
+        range1 = self.indicator_data[self.indicator_data[self.data_column].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data['close'].between(
+        range2 = self.indicator_data[self.indicator_data[self.data_column].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data['close'].between(
+        range3 = self.indicator_data[self.indicator_data[self.data_column].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data['close'].between(
+        range4 = self.indicator_data[self.indicator_data[self.data_column].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data['close'].between(
+        range5 = self.indicator_data[self.indicator_data[self.data_column].between(
             75, 100, inclusive='right')]
 
-        axes.bar(range1.index, range1['close'],
+        axes.bar(range1.index, range1[self.data_column],
                  color='#C05840')  # , width, yerr=menStd
-        axes.bar(range2.index, range2['close'],
+        axes.bar(range2.index, range2[self.data_column],
                  color='#FC9A24')  # , width, yerr=menStd
-        axes.bar(range3.index, range3['close'],
+        axes.bar(range3.index, range3[self.data_column],
                  color='#E5C769')  # , width, yerr=menStd
-        axes.bar(range4.index, range4['close'],
+        axes.bar(range4.index, range4[self.data_column],
                  color='#B4E168')  # , width, yerr=menStd
-        axes.bar(range5.index, range5['close'],
+        axes.bar(range5.index, range5[self.data_column],
                  color='#5CBC3C')  # , width, yerr=menStd
 
         # ax.axhline(0, color='grey', linewidth=0.8)
@@ -139,9 +190,10 @@ class FngIndicator:
         # ax.bar_label(p2)
 
         # Show plot
-        plt.rcParams['figure.dpi'] = 600
-        plt.rcParams['savefig.dpi'] = 600
+        plt.rcParams['figure.figsize'] = [12, 8]
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
+        plt.rcParams['figure.dpi'] = 200
+        plt.rcParams['savefig.dpi'] = 200
         plt.show()
 
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
@@ -163,26 +215,26 @@ class FngIndicator:
         plt.yticks(fontsize='small')
 
         # fng chart ########
-        range1 = self.indicator_data[self.indicator_data['close'].between(
+        range1 = self.indicator_data[self.indicator_data[self.data_column].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data['close'].between(
+        range2 = self.indicator_data[self.indicator_data[self.data_column].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data['close'].between(
+        range3 = self.indicator_data[self.indicator_data[self.data_column].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data['close'].between(
+        range4 = self.indicator_data[self.indicator_data[self.data_column].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data['close'].between(
+        range5 = self.indicator_data[self.indicator_data[self.data_column].between(
             75, 100, inclusive='right')]
 
-        axes.bar(range1.index, range1['close'],
+        axes.bar(range1.index, range1[self.data_column],
                  color='#C05840')  # , width, yerr=menStd
-        axes.bar(range2.index, range2['close'],
+        axes.bar(range2.index, range2[self.data_column],
                  color='#FC9A24')  # , width, yerr=menStd
-        axes.bar(range3.index, range3['close'],
+        axes.bar(range3.index, range3[self.data_column],
                  color='#E5C769')  # , width, yerr=menStd
-        axes.bar(range4.index, range4['close'],
+        axes.bar(range4.index, range4[self.data_column],
                  color='#B4E168')  # , width, yerr=menStd
-        axes.bar(range5.index, range5['close'],
+        axes.bar(range5.index, range5[self.data_column],
                  color='#5CBC3C')  # , width, yerr=menStd
 
         # fng ticks
@@ -201,11 +253,11 @@ class FngIndicator:
         # ticker chart ##########
         axes2 = axes.twinx()
         axes2.set_ylabel('Price', fontsize='medium')
-        axes2.plot(ticker_data.index, ticker_data['close'],
+        axes2.plot(ticker_data.index, ticker_data[self.data_column],
                    color='#333333', linewidth=0.75)
 
         # ticker ticks
-        ticker_max_value = ticker_data['close'].max()
+        ticker_max_value = ticker_data[self.data_column].max()
         ticker_yticks = np.arange(
             0, int(ticker_max_value), int(ticker_max_value / 10))
         ticker_yticks[0] = 0
@@ -217,25 +269,24 @@ class FngIndicator:
         # axes2.axhline(y=ticker_latest_value, color='#dedede', linewidth=0.5, linestyle='--', zorder=-1)
 
         # Show plot
-        plt.rcParams['figure.dpi'] = 600
-        plt.rcParams['savefig.dpi'] = 600
-        # plt.rcParams["figure.autolayout"] = True
+        plt.rcParams['figure.figsize'] = [12, 8]
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
+        plt.rcParams['figure.dpi'] = 200
+        plt.rcParams['savefig.dpi'] = 200
+        # plt.rcParams["figure.autolayout"] = True
         # fig.subplots_adjust(hspace=0.2)
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.show()
 
-    def plot_fng_and_ticker_price_2(self):
+    def plot_fng_and_ticker_price_2(self, ticker_data: pd.DataFrame):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
                 f"[warn] FngIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
 
-        ticker_start_date = self.indicator_data.index[0]
-        ticker_data = datas.get_nasdaq_ticker_time_series(
-            start_date=ticker_start_date)
-        if not isinstance(ticker_data, pd.DataFrame) or self.indicator_data.empty:
-            print(f"[warn] plot_fng_and_ticker_price: No ticker data available")
+        if not isinstance(ticker_data, pd.DataFrame) or ticker_data.empty:
+            print(
+                f"[warn] plot_fng_and_ticker_price: No data available in ticker_data")
             return None
 
         # fig, axes = plt.subplots()
@@ -298,7 +349,7 @@ class FngIndicator:
                         color='#5CBC3C')  # , width, yerr=menStd
 
         # ticker ticks
-        ticker_max_value = ticker_data['close'].max()
+        ticker_max_value = ticker_data[self.data_column].max()
         ticker_yticks = np.arange(
             0, int(ticker_max_value), int(ticker_max_value / 10))
         ticker_yticks[0] = 0
@@ -320,10 +371,11 @@ class FngIndicator:
                             linewidth=0.5, linestyle='--', zorder=-1)
 
         # Show plot
-        plt.rcParams['figure.dpi'] = 600
-        plt.rcParams['savefig.dpi'] = 600
-        # plt.rcParams["figure.autolayout"] = True
+        plt.rcParams['figure.figsize'] = [12, 8]
         # plt.rcParams['figure.figsize'] = [20/2.54, 16/2.54]
+        plt.rcParams['figure.dpi'] = 200
+        plt.rcParams['savefig.dpi'] = 200
+        # plt.rcParams["figure.autolayout"] = True
         # fig.subplots_adjust(hspace=0.2)
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.show()

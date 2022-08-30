@@ -22,6 +22,8 @@ setup(
         'matplotlib',
         'matplotlib-inline',
         'backtrader',
+        'wrapt',
+        'pandas-ta',
     ],
     setup_requires=['pytest-runner'],
     tests_require=['pytest==4.4.1'],

@@ -56,7 +56,7 @@ The idea of applying this strategy with the Rainbow index comes from [this post 
 
 #### Parameters
 
-- **weighted_buy_amount**: Amount base to buy, as in standard DCA
+- **base_buy_amount**: Amount base to buy, as in standard DCA
 - **weighted_multipliers**: Amount multipliers (weighted) for each band. Ex: [1.5, 1.25, 1, 0.75, 0.5]
 - **min_order_period**: Interval of days between periodical orders. Ex: 5
 
@@ -85,7 +85,7 @@ start                = '01/03/2022'   # start date of the simulation. Ex: '01/08
 end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
 initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period     = 7              # Used in weighted_dca and rebalance strategies
-weighted_buy_amount  = 100            # Used in weighted_dca strategy
+base_buy_amount      = 100            # Used in weighted_dca strategy
 weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # Used in weighted_dca strategy
 rebalance_percents   = [85, 65, 50, 15, 10]         # Used in rebalance strategy
 ```

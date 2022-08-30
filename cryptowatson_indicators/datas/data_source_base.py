@@ -1,25 +1,48 @@
 from __future__ import annotations
-from binance.client import Client
-from typing import List, Tuple, Union
+from logging import exception
+import os
+import threading
+from typing import Dict, List, Tuple, Union
 import pandas as pd
 import numpy as np
+import pandas_ta as ta
 import backtrader as bt
 from datetime import datetime, date, timedelta
 from cryptowatson_indicators.utils import parse_any_date
+# from multiprocessing import Manager
+from functools import lru_cache
+from wrapt import synchronized
+
+@lru_cache
+def _read_csv_cached(file_path) -> pd.DataFrame:
+    print('_read_csv_cached!!!!!!!!!!!!!!!!!')
+    return pd.read_csv(file_path, sep=';')
 
 
-class DataSourceBase:
-    dataframe = None
-    only_cache = False
+def _get_ta_ma_strategy(config):
+    return ta.Strategy(
+        name="ta_ma_strategy",
+        ta=[config]
+)
+
+class DataSourceBase():
+    cache_file_path = None
+    index_column = 'date'
+    numeric_columns = []
+    text_columns = []
 
     def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
 
-        self.load_data()
+        self.dataframe = None
+        self.disable_fetch = bool(os.environ.get('DISABLE_FETCH', False))
+        self.disable_write_cache = bool(os.environ.get('DISABLE_WRITE_CACHE', False))
 
-    def load_data(self) -> DataSourceBase:
+
+    @synchronized
+    def load(self) -> DataSourceBase:
         cached_data = None
         missing_data = None
         missing_start_date = None
@@ -27,6 +50,7 @@ class DataSourceBase:
         # Load cached csv data
         try:
             cached_data = self.read_cache()
+
             last_date_cached = cached_data.index.max() if isinstance(
                 cached_data, pd.DataFrame) else None
             if last_date_cached:
@@ -37,7 +61,7 @@ class DataSourceBase:
             cached_data = None
 
         # Fetch API data
-        if not self.only_cache:
+        if not self.disable_fetch:
             missing_data = self.fetch_data(start=missing_start_date)
 
         # Validate data
@@ -59,24 +83,32 @@ class DataSourceBase:
         # Fill missing time series
         self.fill_the_gaps()
 
-        # Write cache
-        self.write_cache()
+        # Write cache (only if it's worth it)
+        if not self.disable_write_cache and (not isinstance(cached_data, pd.DataFrame) or cached_data.empty or cached_data.index.max() < all_data.index.max()):
+            self.write_cache()
 
         return self
 
     def fetch_data(self):
         pass
 
+    # @synchronized
     def write_cache(self) -> None:
+        self._validate_dataframe()
+
+        # print('DataSourceBase.write_cache()!')
         local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
         local_index_column = self.index_column if self.index_column else 'date'
         self.dataframe.to_csv(local_cache_file_path, sep=';',
                               date_format='%Y-%m-%d', index=True, index_label=local_index_column)
 
+    # @synchronized
     def read_cache(self) -> Union[pd.DataFrame, None]:
+        # print('DataSourceBase.read_cache()!')
         local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
         cached_data = pd.read_csv(local_cache_file_path, sep=';')
-
+        # cached_data = _read_csv_cached(local_cache_file_path)
+        
         if not isinstance(cached_data, pd.DataFrame) or cached_data.empty:
             return None
 
@@ -101,6 +133,8 @@ class DataSourceBase:
         return cached_data
 
     def to_dataframe(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+        self._validate_dataframe()
+
         # Filter by dates
         start = parse_any_date(start)
         end = parse_any_date(end)
@@ -120,7 +154,17 @@ class DataSourceBase:
             openinterest=None,
         )
 
+    def append_ta_column(self, ta_config: Dict = None, **kwargs) -> DataSourceBase:
+        self._validate_dataframe()
+
+        if ta_config is not None:
+            self.dataframe.ta.strategy(_get_ta_ma_strategy(ta_config), **kwargs)
+        
+        return self;
+
     def fill_the_gaps(self, start: datetime = None, end: datetime = None) -> DataSourceBase:
+        self._validate_dataframe()
+
         min = self.dataframe.index.min()
         max = self.dataframe.index.max()
 
@@ -140,12 +184,16 @@ class DataSourceBase:
         return self
 
     def get_filtered_by_dates(self, start: datetime = None, end: datetime = None) -> pd.DataFrame:
+        self._validate_dataframe()
+
         min = start if start is not None else self.dataframe.index.min()
         max = end if end is not None else self.dataframe.index.max()
 
         return self.dataframe[(self.dataframe.index >= min) & (self.dataframe.index <= max)]
 
     def get_value_start_end(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None, column_name: str = 'close') -> Tuple(float):
+        self._validate_dataframe()
+
         # Get start index
         start_index = parse_any_date(start)
         if not start_index:
@@ -162,8 +210,12 @@ class DataSourceBase:
             end_index)]
         return (float(rwa_serie_start[column_name]), float(rwa_serie_end[column_name]))
 
+    def _validate_dataframe(self):
+        if not isinstance(self.dataframe, pd.DataFrame):
+            raise exception('Data source not loaded or invalid. Did you forget to call load()?')
+
     @classmethod
-    def reindex_dataframes(cls, data1: pd.DataFrame, data2: pd.DataFrame, date_column_name: str = 'Date', start_date: Union[str, date, datetime, None] = None, end_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
+    def _reindex_dataframes(cls, data1: pd.DataFrame, data2: pd.DataFrame, date_column_name: str = 'Date', start_date: Union[str, date, datetime, None] = None, end_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:
         # df = df.set_index('timestamp').resample('S').ffill().reset_index()
 
         # https://stackoverflow.com/a/69052477
@@ -202,10 +254,6 @@ class DataSourceBase:
         dt1.reset_index(drop=True, inplace=True)
         dt2.reset_index(drop=True, inplace=True)
 
-        # print('dt1: \n', dt1.tail(50))
-        # print('dt2: \n', dt2.tail(50))
-        # return
-
         return dt1, dt2
 
     # fill missing dates in dataframe and return dataframe object
@@ -214,9 +262,8 @@ class DataSourceBase:
     # ds= dataframe object
     # date_col_name= col name in your dataframe, has datevalue
     # Source: https://github.com/n-idhisharma/mywork/blob/09942f15f6859e94e5dbb9fcb1af05ac7f627b06/Py_filling_missing_dates
-
     @classmethod
-    def fillin_dataframe(cls, data: pd.DataFrame, date_col_name='Date', fill_val=np.nan, date_format='%Y-%m-%d'):
+    def _fillin_dataframe(cls, data: pd.DataFrame, date_col_name='Date', fill_val=np.nan, date_format='%Y-%m-%d'):
         df = data.set_index(date_col_name, drop=True)
         df.index = pd.to_datetime(df.index, format=date_format)
         idx = pd.date_range(df.index.min(), df.index.max())

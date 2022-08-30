@@ -1,12 +1,14 @@
 # <AUTOGEN_INIT>
-from .base_strategy import (LoggerStrategy, OrderLoggerStrategy,)
-from .btc_sentiment_strategy import (BtcSentiment,)
-from .fng_strategy import (FngRebalanceStrategy, FngWeightedAverageStrategy,)
-from .rwa_strategy import (RwaIndicatorWrapper, RwaRebalanceStrategy,
-                           RwaWeightedAverageStrategy,)
+from .base_strategy import (CheatOnOpenCryptoStrategy, CryptoStrategy,)
+from .dca_strategy import (DCAStrategy,)
+from .hodl_strategy import (HodlStrategy,)
+from .indicator_wrappers import (BandIndicatorWrapper, FngBandIndicatorWrapper,
+                                 RainbowBandIndicatorWrapper,)
+from .rebalance_strategy import (RebalanceStrategy,)
+from .weighted_dca_strategy import (WeightedDCAStrategy,)
 
-__all__ = ['BtcSentiment', 'FngRebalanceStrategy',
-           'FngWeightedAverageStrategy', 'LoggerStrategy',
-           'OrderLoggerStrategy', 'RwaIndicatorWrapper',
-           'RwaRebalanceStrategy', 'RwaWeightedAverageStrategy']
+__all__ = ['BandIndicatorWrapper', 'CheatOnOpenCryptoStrategy',
+           'CryptoStrategy', 'DCAStrategy', 'FngBandIndicatorWrapper',
+           'HodlStrategy', 'RainbowBandIndicatorWrapper', 'RebalanceStrategy',
+           'WeightedDCAStrategy']
 # </AUTOGEN_INIT>

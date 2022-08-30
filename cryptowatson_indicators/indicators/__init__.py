@@ -2,7 +2,7 @@
 
 # <AUTOGEN_INIT>
 from .fng import (FngIndicator,)
-from .rwa import (RwaIndicator,)
+from .rainbow import (RainbowIndicator,)
 
-__all__ = ['FngIndicator', 'RwaIndicator']
+__all__ = ['FngIndicator', 'RainbowIndicator']
 # </AUTOGEN_INIT>
