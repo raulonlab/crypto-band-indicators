@@ -2,7 +2,7 @@ import backtrader as bt
 from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
 from cryptowatson_indicators.backtrader.indicator_wrappers import FngBandIndicatorWrapper
 from cryptowatson_indicators.datas import TickerDataSource, FngDataSource
-from cryptowatson_indicators.indicators import FngIndicator
+from cryptowatson_indicators.indicators import FngBandIndicator
 from cryptowatson_indicators.utils.utils import LogColors
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
@@ -28,7 +28,7 @@ ma_class = None
 indicator_params = {}   # indicator ma config: use a ma value instead of the raw value
 
 # logging
-log = False
+log = True
 debug = False
 
 # Enable / diable parts to bo tested
@@ -42,20 +42,18 @@ ticker_data_source = TickerDataSource().load()
 fng_data_source = FngDataSource().load()
 
 # Fng Indicator with 'fng' data
-fng = FngIndicator(fng_data_source.to_dataframe())
+fng = FngBandIndicator(fng_data_source.to_dataframe())
 
 def get_value_test():
     # Get Current Fear and Greed index
-    fng_value = fng.get_current_fng_value()
-    fng_details = FngIndicator._get_fng_value_details(fng_value)
+    fng_details = fng.get_band_details_at()
     print('Current FnG:')
     pprint(fng_details)
 
     # Get Fear and Greed index at date
     at_date = '01/02/2021'    # date when look up the Fng
 
-    fng_value = fng.get_fng_value(at_date=at_date)
-    fng_details = FngIndicator._get_fng_value_details(fng_value)
+    fng_details = fng.get_band_details_at(at_date=at_date)
     print(f"FnG at {at_date}:")
     pprint(fng_details)
 

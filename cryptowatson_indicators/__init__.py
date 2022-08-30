@@ -16,13 +16,15 @@ from cryptowatson_indicators.backtrader import (BandIndicatorWrapper,
                                                 WeightedDCAStrategy,)
 from cryptowatson_indicators.datas import (DataSourceBase, FngDataSource,
                                            TickerDataSource,)
-from cryptowatson_indicators.indicators import (FngIndicator,
-                                                RainbowIndicator,)
+from cryptowatson_indicators.indicators import (BandDetails, BandIndicatorBase,
+                                                FngBandIndicator,
+                                                RainbowBandIndicator,)
 
-__all__ = ['BandIndicatorWrapper', 'CheatOnOpenCryptoStrategy',
-           'CryptoStrategy', 'DCAStrategy', 'DataSourceBase',
-           'FngBandIndicatorWrapper', 'FngDataSource', 'FngIndicator',
-           'HodlStrategy', 'RainbowBandIndicatorWrapper', 'RainbowIndicator',
-           'RebalanceStrategy', 'TickerDataSource', 'WeightedDCAStrategy',
-           'backtrader', 'datas', 'indicators', 'utils']
+__all__ = ['BandDetails', 'BandIndicatorBase', 'BandIndicatorWrapper',
+           'CheatOnOpenCryptoStrategy', 'CryptoStrategy', 'DCAStrategy',
+           'DataSourceBase', 'FngBandIndicator', 'FngBandIndicatorWrapper',
+           'FngDataSource', 'HodlStrategy', 'RainbowBandIndicator',
+           'RainbowBandIndicatorWrapper', 'RebalanceStrategy',
+           'TickerDataSource', 'WeightedDCAStrategy', 'backtrader', 'datas',
+           'indicators', 'utils']
 # </AUTOGEN_INIT>

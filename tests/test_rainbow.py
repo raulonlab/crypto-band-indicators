@@ -2,7 +2,7 @@ import backtrader as bt
 from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
 from cryptowatson_indicators.backtrader.indicator_wrappers import RainbowBandIndicatorWrapper
 from cryptowatson_indicators.datas import TickerDataSource
-from cryptowatson_indicators.indicators import RainbowIndicator
+from cryptowatson_indicators.indicators import RainbowBandIndicator
 from cryptowatson_indicators.utils.utils import LogColors
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
@@ -26,7 +26,7 @@ ma_class = None
 indicator_params = {}   # indicator ma config: use a ma value instead of the raw value
 
 # logging
-log = False
+log = True
 debug = False
 
 # Enable / diable parts to bo tested
@@ -40,29 +40,26 @@ ticker_data_source = TickerDataSource().load()
 
 # Limit indicator series to start at specific date or None to use all the history
 indicator_start_date = None
-rwa = RainbowIndicator(ticker_data_source.to_dataframe())
-
+rainbow = RainbowBandIndicator(ticker_data_source.to_dataframe())
 
 def get_value_test():
     # Get Current Rainbow band
-    band_index = rwa.get_current_rainbow_band_index()
-    rainbow_info = RainbowIndicator._get_rainbow_info_by_index(band_index)
+    rainbow_details = rainbow.get_band_details_at()
     print('Current Rainbow Band:')
-    pprint(rainbow_info)
+    pprint(rainbow_details)
 
     # Get Rainbow band at date
     at_date = '01/02/2021'    # date when look up the Fng
     price_at_date = 30000     # Price of BTC at date
 
-    band_index = rwa.get_rainbow_band_index(
+    rainbow_details = rainbow.get_band_details_at(
         price=price_at_date, at_date=at_date)
-    rainbow_info = RainbowIndicator._get_rainbow_info_by_index(band_index)
     print(f"Rainbow Band at {at_date}:")
-    pprint(rainbow_info)
+    pprint(rainbow_details)
 
 
 def plot_test():
-    rwa.plot_rainbow()
+    rainbow.plot_rainbow()
 
 
 def backtrader_test():

@@ -13,7 +13,7 @@ load_dotenv()
 
 # Global variables
 strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
-indicator = "rainbow"         # Select indicator between "fng" and "rainbow"
+indicator = "fng"         # Select indicator between "fng" and "rainbow"
 ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
 start = '01/08/2020'
 end = '31/07/2021'
@@ -111,8 +111,6 @@ def backtrader_test():
     print(f"{'Started:':<8} {strategy_results.start_value:>10.2f} USD (1 BTC = {start_btc_price:.2f} USD)")
     print(f"{'Ended:':<8} {strategy_results.end_value:>10.2f} USD (1 BTC = {end_btc_price:.2f} USD)")
     print(f"{'PnL:':<8} {pnl_color}{strategy_results.pnl_value:>+10.2f} USD ({strategy_results.pnl_percent:+.2f}%){LogColors.ENDC}")
-
-    
 
     if run_plot_backtrader_result_test:
         strategy_results.plot()

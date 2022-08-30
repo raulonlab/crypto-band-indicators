@@ -7,19 +7,29 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.optimize import curve_fit
 from cryptowatson_indicators.datas import TickerDataSource
+from cryptowatson_indicators.indicators.band_indicator_base import BandDetails
 from ..utils import utils
 
-_RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
-                        "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
-_RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
-                         '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
-_RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
-    0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
-_RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
+# _RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
+#                         "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
+# _RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
+#                          '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
+# _RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
+#     0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
+# _RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
 _FITTED_BAND_LOG_MULTIPLIER = .455
 
+def _rainbow_logarithmic_function(x, a, b, c):
+        return a*np.log(b+x) + c
 
-class RainbowIndicator:
+class RainbowBandIndicator:
+    _band_thresholds= []
+    _band_names=      ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
+                        "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
+    _band_colors=     ['#6b8ed0', '#78acb2', '#84ca95',
+                         '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
+    _band_multipliers=[0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
+    _band_multipliers_fibonacci=[0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
     def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = '', fitted_multiplier: float = _FITTED_BAND_LOG_MULTIPLIER):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
@@ -33,7 +43,7 @@ class RainbowIndicator:
             self.indicator_data = TickerDataSource().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            error_message = f"FngIndicator.constructor: No indicator data available"
+            error_message = f"RainbowBandIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
 
@@ -44,101 +54,99 @@ class RainbowIndicator:
         # here we ar fitting the curve, you can use 2 data points however I wasn't able to get a graph that looked as good with just 2 points.
         # p0=[10, 100, 90], p0 is justa guess, doesn't matter as far as I know
         popt, pcov = curve_fit(
-            RainbowIndicator._rwa_logarithmic_function, xdata, ydata)
+            _rainbow_logarithmic_function, xdata, ydata)
         # This is our fitted data, remember we will need to get the ex of it to graph it
 
-        # print('popt: ', popt)
-
-        self.fittedYData = RainbowIndicator._rwa_logarithmic_function(
+        self.fittedYData = _rainbow_logarithmic_function(
             xdata, popt[0], popt[1], popt[2])
         # Add columns with rainbow coordenates
         for i in range(-3, 7):
             self.indicator_data[f"fitted_data{i}"] = np.exp(
                 self.fittedYData + i * fitted_multiplier)
 
-    def get_current_rainbow_band_index(self):
+
+    def _get_current_ticker_market_price(self) -> Union[float, None]:
         # Get current ticker price from Binance
         price_dict = TickerDataSource.get_binance_ticker_market_price(self.ticker_symbol,
                                                                       self.binance_api_key, self.binance_secret_key)
-        current_price = float(price_dict['price'])
+        return float(price_dict['price']) if price_dict['price'] is not None else None
 
-        # Get rainbow band index (at the most recent time of the time series)
-        return self.get_rainbow_band_index(current_price)
 
-    def get_rainbow_band_index(self, price: float, at_date: Union[str, date, datetime, None] = None):
+    def get_band_at(self, price: float = None, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
-                f"[warn] RainbowIndicator.get_rainbow_band_index: No historical data available")
+                f"[warn] RainbowBandIndicator.get_band_at: No historical data available")
             return None
+        
+        if price is None:
+            price = self._get_current_ticker_market_price()
 
         at_date = utils.parse_any_date(at_date)
         if not at_date:
             at_date = self.indicator_data.index.max().date()
 
-        rwa_serie_at_date = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+        rainbow_serie_at = self.indicator_data[self.indicator_data.index == pd.to_datetime(
             at_date)]
-        if (rwa_serie_at_date.empty):
+        if (rainbow_serie_at.empty):
             print(
-                f"[warn] RainbowIndicator.get_rainbow_band_index: Data not found at date {at_date}")
+                f"[warn] RainbowBandIndicator.get_band_at: Data not found at date {at_date}")
             return None
 
         # Search for the band index
-        band_index = -1
+        band_index_at = -1
         # Fire sale!!
-        if price < float(rwa_serie_at_date["fitted_data-2"]):
-            band_index = 8
+        if price < float(rainbow_serie_at["fitted_data-2"]):
+            band_index_at = 8
 
         # Buy!
-        elif price > float(rwa_serie_at_date["fitted_data-2"]) and price <= float(rwa_serie_at_date["fitted_data-1"]):
-            band_index = 7
+        elif price > float(rainbow_serie_at["fitted_data-2"]) and price <= float(rainbow_serie_at["fitted_data-1"]):
+            band_index_at = 7
 
         # Accumulate
-        elif price > float(rwa_serie_at_date["fitted_data-1"]) and price <= float(rwa_serie_at_date["fitted_data0"]):
-            band_index = 6
+        elif price > float(rainbow_serie_at["fitted_data-1"]) and price <= float(rainbow_serie_at["fitted_data0"]):
+            band_index_at = 6
 
         # Still cheap
-        elif price > float(rwa_serie_at_date["fitted_data0"]) and price <= float(rwa_serie_at_date["fitted_data1"]):
-            band_index = 5
+        elif price > float(rainbow_serie_at["fitted_data0"]) and price <= float(rainbow_serie_at["fitted_data1"]):
+            band_index_at = 5
 
         # HODL
-        elif price > float(rwa_serie_at_date["fitted_data1"]) and price <= float(rwa_serie_at_date["fitted_data2"]):
-            band_index = 4
+        elif price > float(rainbow_serie_at["fitted_data1"]) and price <= float(rainbow_serie_at["fitted_data2"]):
+            band_index_at = 4
 
         # Is this a bubble?
-        elif price > float(rwa_serie_at_date["fitted_data2"]) and price <= float(rwa_serie_at_date["fitted_data3"]):
-            band_index = 3
+        elif price > float(rainbow_serie_at["fitted_data2"]) and price <= float(rainbow_serie_at["fitted_data3"]):
+            band_index_at = 3
 
         # FOMO intensifies
-        elif price > float(rwa_serie_at_date["fitted_data3"]) and price <= float(rwa_serie_at_date["fitted_data4"]):
-            band_index = 2
+        elif price > float(rainbow_serie_at["fitted_data3"]) and price <= float(rainbow_serie_at["fitted_data4"]):
+            band_index_at = 2
 
         # Sell, seriouly sell!
-        elif price > float(rwa_serie_at_date["fitted_data4"]) and price <= float(rwa_serie_at_date["fitted_data5"]):
-            band_index = 1
+        elif price > float(rainbow_serie_at["fitted_data4"]) and price <= float(rainbow_serie_at["fitted_data5"]):
+            band_index_at = 1
 
         # Maximum bubble!!
         else:
-            band_index = 0
+            band_index_at = 0
 
-        return band_index
+        return band_index_at
+    
+    def get_band_details_at(self, price: float = None, at_date: Union[str, date, datetime, None] = None) -> Union[BandDetails, None]:
+        band_index = self.get_band_at(price=price, at_date=at_date) 
+        
+        if (band_index is None or band_index < 0 or band_index > len(self._band_names) -1):
+            return None
+        
+        band_details_at = BandDetails()
+        band_details_at.band_index=band_index
+        band_details_at.band_ordinal=f"{band_index + 1}/{len(self._band_names)}",
+        band_details_at.name=self._band_names[band_index]
+        band_details_at.color=self._band_colors[band_index]
+        band_details_at.multiplier=self._band_multipliers[band_index]
 
-    @classmethod
-    def _rwa_logarithmic_function(cls, x, a, b, c):
-        return a*np.log(b+x) + c
+        return band_details_at
 
-    @classmethod
-    def _get_rainbow_info_by_index(cls, index: int = -1) -> dict:
-        if (index < 0 or index > len(_RAINBOW_BANDS_NAMES)):
-            return dict()
-
-        return {
-            'band_index': index,
-            'band_ordinal': f"{index + 1}/9",
-            'name': _RAINBOW_BANDS_NAMES[index],
-            'color': _RAINBOW_BANDS_COLORS[index],
-            'fibs_multiplier': _RAINBOW_BANDS_FIBONACCI_MULTIPLIERS[index],
-            'original_multiplier': _RAINBOW_BANDS_ORIGINAL_MULTIPLIERS[index],
-        }
     
     def plot_axes(self, axes, start=None, end=None):
         plot_data = self.indicator_data
@@ -157,9 +165,9 @@ class RainbowIndicator:
         for i in range(-2, 7):
             # You can use the below plot fill between rather than the above line plot, I prefer the line graph
             axes.fill_between(plot_data.index, plot_data[f"fitted_data{i-1}"],
-                              plot_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=_RAINBOW_BANDS_COLORS[i+2])
+                              plot_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=self._band_colors[i+2])
             axes.plot(plot_data.index,
-                      plot_data[f"fitted_data{i}"], linewidth=1, color=_RAINBOW_BANDS_COLORS[i+2])
+                      plot_data[f"fitted_data{i}"], linewidth=1, color=self._band_colors[i+2])
 
         # yticks
         axes.tick_params(axis='y', labelsize='x-small')
@@ -204,9 +212,9 @@ class RainbowIndicator:
         for i in range(-2, 7):
             # You can use the below plot fill between rather than the above line plot, I prefer the line graph
             axes.fill_between(self.indicator_data.index, self.indicator_data[f"fitted_data{i-1}"],
-                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=_RAINBOW_BANDS_COLORS[i+2])
+                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=self._band_colors[i+2])
             axes.plot(self.indicator_data.index,
-                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=_RAINBOW_BANDS_COLORS[i+2])
+                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=self._band_colors[i+2])
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 

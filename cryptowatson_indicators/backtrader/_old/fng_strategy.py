@@ -3,7 +3,7 @@ from pprint import pprint
 import backtrader as bt
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from cryptowatson_indicators.indicators import FngIndicator
+from cryptowatson_indicators.indicators import FngBandIndicator
 from cryptowatson_indicators import utils
 from .base_strategy import RebalanceStrategy_old, WeightedAverageStrategy_old
 
@@ -18,7 +18,7 @@ class FngIndicatorWrapper(bt.Indicator):
     def __init__(self):
         # self.addminperiod(self.params.ma_period)
 
-        self.fng = FngIndicator()
+        self.fng = FngBandIndicator()
 
         # MA of the strategy data
         # self.ma = bt.indicators.WeightedMovingAverage(
@@ -26,8 +26,8 @@ class FngIndicatorWrapper(bt.Indicator):
 
 
     def next(self):
-        bar_fng_value = self.fng.get_fng_value(self.data.datetime.date())
-        bar_fng_info = FngIndicator._get_fng_value_details(bar_fng_value)
+        bar_fng_value = self.fng.get_value_at(self.data.datetime.date())
+        bar_fng_info = FngBandIndicator._get_fng_value_details(bar_fng_value)
 
         self.lines.fng_index[0] = int(bar_fng_info.get('fng_index'))
         self.lines.fng_ma_index[0] = self.lines.fng_index[0]    # TODO: Calculate fng MA

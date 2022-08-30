@@ -3,7 +3,7 @@ import backtrader as bt
 import pandas as pd
 from cryptowatson_indicators.datas.fng_data_source import FngDataSource
 from cryptowatson_indicators.datas.ticker_data_source import TickerDataSource
-from cryptowatson_indicators.indicators import FngIndicator, RainbowIndicator
+from cryptowatson_indicators.indicators import FngBandIndicator, RainbowBandIndicator
 
 
 def _get_ta_ma_config(kind, length): return {
@@ -40,21 +40,19 @@ class FngBandIndicatorWrapper(BandIndicatorWrapper):
                 ta_config=ta_ma_config)
             data_column = "close_ma"
 
-        self.fng = FngIndicator(
+        self.fng = FngBandIndicator(
             data=indicator_data_source.to_dataframe(), data_column=data_column)
 
     def next(self):
-        bar_fng_value = self.fng.get_fng_value(self.data.datetime.date())
-        bar_fng_info = FngIndicator._get_fng_value_details(bar_fng_value)
-        self.lines.band_index[0] = int(bar_fng_info.get('fng_index'))
+        self.lines.band_index[0] = self.fng.get_band_at(self.data.datetime.date())
     
     # def once(self, start, end):
     #     print('FngBandIndicatorWrapper.once()')
     #     band_index_array = self.lines.band_index.array
 
     #     for i in pd.date_range(start, end - timedelta(days=1), freq='d'):
-    #         bar_fng_value = self.fng.get_fng_value(i)
-    #         bar_fng_info = FngIndicator._get_fng_value_details(bar_fng_value)
+    #         bar_fng_value = self.fng.get_value_at(i)
+    #         bar_fng_info = FngBandIndicator._get_fng_value_details(bar_fng_value)
 
     #         band_index_array[i] = int(bar_fng_info.get('fng_index'))
 
@@ -71,18 +69,11 @@ class RainbowBandIndicatorWrapper(BandIndicatorWrapper):
         indicator_data_source.load()
         data_column = 'close'
 
-        self.rainbow = RainbowIndicator(
+        self.rainbow = RainbowBandIndicator(
             data=indicator_data_source.to_dataframe(), data_column=data_column)
 
     def next(self):
-        band_index = self.rainbow.get_rainbow_band_index(
-            price=self.data.close[0], at_date=self.data.datetime.date())
-        
-        # print('price: ', self.data.close[0])
-        # print('at_date: ', self.data.datetime.date())
-        # print('band_index: ', band_index)
-
-        self.lines.band_index[0] = int(band_index)
+        self.lines.band_index[0] = self.rainbow.get_band_at(price=self.data.close[0], at_date=self.data.datetime.date())
 
     # def once(self, start, end):
     #    band_index_array = self.lines.band_index.array

@@ -7,20 +7,25 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cryptowatson_indicators.datas import FngDataSource
 from cryptowatson_indicators import utils
+from .band_indicator_base import BandIndicatorBase, BandDetails
 
 # 0-25: Extreme Fear
 # 26-46: Fear
 # 47-54: Neutral
 # 55-75: Greed
 # 76-100: Extreme Greed
-_FNG_THRESHOLDS = [25,             46,        54,        75,        100]
-_FNG_NAMES = ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
+# _FNG_THRESHOLDS = [25,             46,        54,        75,        100]
+# _FNG_NAMES = ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
 # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
-_FNG_COLORS = ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
-_FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
+# _FNG_COLORS = ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
+# _FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
 
 
-class FngIndicator:
+class FngBandIndicator(BandIndicatorBase):
+    _band_thresholds= [25,             46,        54,        75,        100]
+    _band_names=      ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
+    _band_colors=     ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
+    _band_multipliers=[1.5,            1.25,      1,         0.75,      0.5]
     def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
@@ -34,60 +39,67 @@ class FngIndicator:
             self.indicator_data = FngDataSource().to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            error_message = f"FngIndicator.constructor: No indicator data available"
+            error_message = f"FngBandIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
             raise exception(error_message)
 
+    def get_band_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
+        value_at = self.get_value_at(at_date=at_date)
 
-    def get_current_fng_value(self) -> Union[int, None]:
-        return self.get_fng_value(at_date=None)
+        if (value_at is None or value_at < 0 or value_at > 100):
+            return None
 
-    def get_fng_value(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
+        # Get index
+        band_index_at = 0
+        if (0 <= value_at < self._band_thresholds[0]):
+            band_index_at = 0
+        elif (self._band_thresholds[0] <= value_at < self._band_thresholds[1]):
+            band_index_at = 1
+        elif (self._band_thresholds[1] <= value_at <= self._band_thresholds[2]):
+            band_index_at = 2
+        elif (self._band_thresholds[2] < value_at <= self._band_thresholds[3]):
+            band_index_at = 3
+        elif (self._band_thresholds[3] < value_at <= self._band_thresholds[4]):
+            band_index_at = 4
+
+        return band_index_at
+
+    def get_band_details_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[BandDetails, None]:
+        band_index = self.get_band_at(at_date=at_date)
+        
+        if (band_index is None or band_index < 0 or band_index > len(self._band_names) -1):
+            return None
+        
+        band_details_at = BandDetails()
+        band_details_at.band_index=band_index
+        band_details_at.band_ordinal=f"{band_index + 1}/{len(self._band_names)}",
+        band_details_at.name=self._band_names[band_index]
+        band_details_at.color=self._band_colors[band_index]
+        band_details_at.multiplier=self._band_multipliers[band_index]
+
+        return band_details_at
+
+    def get_value_at(self, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            print(f"[warn] FngIndicator.get_fng_value: No indicator data available")
+            print(f"[warn] FngBandIndicator.get_value_at: No indicator data available")
             return None
 
         at_date = utils.parse_any_date(at_date)
         if not at_date:
             at_date = self.indicator_data.index.max().date()
 
-        fng_at_serie = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+        value_serie_at = self.indicator_data[self.indicator_data.index == pd.to_datetime(
             at_date)]
-        if (fng_at_serie.empty):
+        if (value_serie_at.empty):
             print(
-                f"[warn] FngIndicator.get_fng_value: Data not found at date {at_date}")
+                f"[warn] FngBandIndicator.get_value_at: Data not found at date {at_date}")
             return None
 
-        fng_at_value = int(fng_at_serie[self.data_column])
+        value_at = int(value_serie_at[self.data_column])
 
-        return fng_at_value
+        return value_at
 
-    @classmethod
-    def _get_fng_value_details(cls, value: int = -1) -> dict:
-        if (value is None or value < 0 or value > 100):
-            return dict()
 
-        # Get index
-        index = 0
-        if (0 <= value < _FNG_THRESHOLDS[0]):
-            index = 0
-        elif (_FNG_THRESHOLDS[0] <= value < _FNG_THRESHOLDS[1]):
-            index = 1
-        elif (_FNG_THRESHOLDS[1] <= value <= _FNG_THRESHOLDS[2]):
-            index = 2
-        elif (_FNG_THRESHOLDS[2] < value <= _FNG_THRESHOLDS[3]):
-            index = 3
-        elif (_FNG_THRESHOLDS[3] < value <= _FNG_THRESHOLDS[4]):
-            index = 4
-
-        return {
-            'fng_index': index,
-            'fng_ordinal': f"{index + 1}/5",
-            'name': _FNG_NAMES[index],
-            'color': _FNG_COLORS[index],
-            'multiplier': _FNG_MULTIPLIERS[index],
-        }
-    
     def plot_axes(self, axes, start=None, end=None):
         plot_data = self.indicator_data
         # Filter start and end
@@ -126,7 +138,7 @@ class FngIndicator:
         #             color='#000000', alpha=0.5, linewidth=1, label='FnG MA')
 
         # yticks
-        axes.set_yticks(_FNG_THRESHOLDS)
+        axes.set_yticks(self._band_thresholds)
         axes.tick_params(axis='y', labelsize='x-small')
 
         # Grid
@@ -137,9 +149,35 @@ class FngIndicator:
         return axes
 
 
+    # @classmethod
+    # def _get_fng_value_details(cls, value: int = -1) -> dict:
+    #     if (value is None or value < 0 or value > 100):
+    #         return dict()
+
+    #     # Get index
+    #     index = 0
+    #     if (0 <= value < self._band_thresholds[0]):
+    #         index = 0
+    #     elif (self._band_thresholds[0] <= value < self._band_thresholds[1]):
+    #         index = 1
+    #     elif (self._band_thresholds[1] <= value <= self._band_thresholds[2]):
+    #         index = 2
+    #     elif (self._band_thresholds[2] < value <= self._band_thresholds[3]):
+    #         index = 3
+    #     elif (self._band_thresholds[3] < value <= self._band_thresholds[4]):
+    #         index = 4
+
+    #     return {
+    #         'fng_index': index,
+    #         'fng_ordinal': f"{index + 1}/5",
+    #         'name': _FNG_NAMES[index],
+    #         'color': _FNG_COLORS[index],
+    #         'multiplier': _FNG_MULTIPLIERS[index],
+    #     }
+    
     def plot_fng(self):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            print(f"[warn] FngIndicator.plot_fng: No indicator data available")
+            print(f"[warn] FngBandIndicator.plot_fng: No indicator data available")
             return None
 
         fig, axes = plt.subplots()
@@ -199,7 +237,7 @@ class FngIndicator:
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
-                f"[warn] FngIndicator.plot_fng_and_ticker_price: No indicator data available")
+                f"[warn] FngBandIndicator.plot_fng_and_ticker_price: No indicator data available")
             return None
 
         if not isinstance(ticker_data, pd.DataFrame) or ticker_data.empty:
@@ -281,7 +319,7 @@ class FngIndicator:
     def plot_fng_and_ticker_price_2(self, ticker_data: pd.DataFrame):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(
-                f"[warn] FngIndicator.plot_fng_and_ticker_price_2: No indicator data available")
+                f"[warn] FngBandIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
 
         if not isinstance(ticker_data, pd.DataFrame) or ticker_data.empty:
@@ -302,7 +340,7 @@ class FngIndicator:
 
         # fng chart ########
         merged_data = pd.merge(self.indicator_data, ticker_data,
-                               how='inner', on='Date', suffixes=('FngIndicator', 'Ticker'))
+                               how='inner', on='Date', suffixes=('FngBandIndicator', 'Ticker'))
 
         range1 = merged_data[merged_data['ValueFng'].between(
             0, 25, inclusive='left')]
