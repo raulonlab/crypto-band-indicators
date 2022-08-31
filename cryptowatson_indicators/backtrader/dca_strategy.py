@@ -88,7 +88,7 @@ class DCAStrategy(CryptoStrategy):
         # min_max_yaxis.grid(axis='y', linestyle='--')
         
         # Plot Buy and sell scatters
-        self.plot_axes_orders(ticker_axes)
+        # self.plot_axes_orders(ticker_axes)
 
         # Calculate x ticks
         ticker_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
