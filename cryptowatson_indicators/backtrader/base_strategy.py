@@ -39,8 +39,12 @@ class CryptoStrategy(bt.Strategy):
         # print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         # print('CryptoStrategy:stop():str(self): ', str(self))
     
-    def describe(self):
-        return {'name': str(self), 'start_value': self.start_value, 'end_value': self.end_value, 'pnl_value': self.pnl_value, 'pnl_percent': self.pnl_percent }
+    def describe(self, keys = None):
+        self_dict = {'name': str(self), 'start_value': self.start_value, 'end_value': self.end_value, 'pnl_value': self.pnl_value, 'pnl_percent': self.pnl_percent }
+        if keys is not None:
+            self_dict = {key: self_dict[key] for key in keys}
+        
+        return self_dict
 
     def log(self, txt, price=None, dt=None, log_color=None):
         if (self.params.log != True):

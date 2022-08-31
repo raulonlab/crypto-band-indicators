@@ -7,12 +7,9 @@ from cryptowatson_indicators import indicators
 from cryptowatson_indicators import utils
 
 from cryptowatson_indicators.backtrader import (BandIndicatorWrapper,
-                                                BandIndicatorWrapperOld,
                                                 CheatOnOpenCryptoStrategy,
                                                 CryptoStrategy, DCAStrategy,
-                                                FngBandIndicatorWrapper,
                                                 HodlStrategy,
-                                                RainbowBandIndicatorWrapper,
                                                 RebalanceStrategy,
                                                 WeightedDCAStrategy,)
 from cryptowatson_indicators.datas import (DataSourceBase, FngDataSource,
@@ -22,11 +19,9 @@ from cryptowatson_indicators.indicators import (BandDetails, BandIndicatorBase,
                                                 RainbowBandIndicator,)
 
 __all__ = ['BandDetails', 'BandIndicatorBase', 'BandIndicatorWrapper',
-           'BandIndicatorWrapperOld', 'CheatOnOpenCryptoStrategy',
-           'CryptoStrategy', 'DCAStrategy', 'DataSourceBase',
-           'FngBandIndicator', 'FngBandIndicatorWrapper', 'FngDataSource',
-           'HodlStrategy', 'RainbowBandIndicator',
-           'RainbowBandIndicatorWrapper', 'RebalanceStrategy',
+           'CheatOnOpenCryptoStrategy', 'CryptoStrategy', 'DCAStrategy',
+           'DataSourceBase', 'FngBandIndicator', 'FngDataSource',
+           'HodlStrategy', 'RainbowBandIndicator', 'RebalanceStrategy',
            'TickerDataSource', 'WeightedDCAStrategy', 'backtrader', 'datas',
            'indicators', 'utils']
 # </AUTOGEN_INIT>

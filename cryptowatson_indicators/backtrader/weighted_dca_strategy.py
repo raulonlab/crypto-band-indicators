@@ -36,12 +36,17 @@ class WeightedDCAStrategy(CryptoStrategy):
     def __str__(self):
         return f"Weighted DCA {str(self.indicator)}"
     
-    def describe(self):
+    def describe(self, keys=None):
         self_dict = super().describe()
         self_dict['min_order_period'] = self.params.min_order_period
+        self_dict['base_buy_amount'] = self.params.base_buy_amount
         self_dict['weighted_multipliers'] = ','.join([str(multiplier) for multiplier in self.params.weighted_multipliers])
         self_dict['ma_class'] = None if self.params.ma_class is None else ''.join([char for char in self.params.ma_class.__name__ if char.isupper()])
+        self_dict['params'] = f"{self_dict['min_order_period']} days |{self_dict['base_buy_amount']}$ |{self_dict['weighted_multipliers']}"
 
+        if keys is not None:
+            self_dict = {key: self_dict[key] for key in keys}
+        
         return self_dict
 
     def next(self):
@@ -68,13 +73,13 @@ class WeightedDCAStrategy(CryptoStrategy):
         self.order = self.buy(
             size=buy_btc_size, weighted_multiplier=self.params.weighted_multipliers[indicator_index])
 
-    def plot(self, show: bool = True):
+    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = ''):
         ticker_data = self.data._dataname
 
         gs_kw = dict(height_ratios=[2, 1, 1])
         fig, (ticker_axes, strategy_axes, indicator_axes) = plt.subplots(
             nrows=3, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))    # constrained_layout=True, figsize=(11, 7)
-        fig.suptitle(str(self), fontsize='large')
+        fig.suptitle(f"{title_prefix}{str(self)}{title_suffix}", fontsize='large')
         # fig.set_tight_layout(True)
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
 
@@ -114,7 +119,7 @@ class WeightedDCAStrategy(CryptoStrategy):
 
         # Fng indicator chart ########
         self.indicator.plot_axes(indicator_axes, start = ticker_data.index.min(), end = ticker_data.index.max())
-        self.plot_axes_order_vlines(indicator_axes)
+        # self.plot_axes_order_vlines(indicator_axes)
 
         # Calculate x ticks
         ticker_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))

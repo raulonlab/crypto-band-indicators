@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Global variables
-strategy = "weighted_dca"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
+strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
 indicator = "fng"         # Select indicator between "fng" and "rainbow"
 ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
 start = '01/08/2020'
@@ -32,7 +32,7 @@ fng_rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each
 rainbow_rebalance_percents = [0, 10, 20, 30, 50, 70, 80, 80, 100]
 
 # logging
-log = True
+log = False
 debug = False
 
 # Enable / diable parts to bo tested

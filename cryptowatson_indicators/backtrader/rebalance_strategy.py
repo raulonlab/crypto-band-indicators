@@ -35,12 +35,16 @@ class RebalanceStrategy(CryptoStrategy):
     def __str__(self):
         return f"Rebalance {str(self.indicator)}"
     
-    def describe(self):
+    def describe(self, keys = None):
         self_dict = super().describe()
         self_dict['min_order_period'] = self.params.min_order_period
         self_dict['rebalance_percents'] = ','.join([str(rebalance) for rebalance in self.params.rebalance_percents])
         self_dict['ma_class'] = None if self.params.ma_class is None else ''.join([char for char in self.params.ma_class.__name__ if char.isupper()])
+        self_dict['params'] = f"{self_dict['min_order_period']} days |{self_dict['rebalance_percents']}"
 
+        if keys is not None:
+            self_dict = {key: self_dict[key] for key in keys}
+        
         return self_dict
 
     # def nextstart(self):
@@ -131,15 +135,15 @@ class RebalanceStrategy(CryptoStrategy):
                                    rebalance_percent=percent)
 
 
-    def plot(self, show: bool = True):
+    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = ''):
         ticker_data = self.data._dataname
 
         gs_kw = dict(height_ratios=[2, 1, 1])
         fig, (ticker_axes, strategy_axes, indicator_axes) = plt.subplots(
             nrows=3, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))  # constrained_layout=True, figsize=(11, 7)
-        fig.suptitle(str(self), fontsize='large')
+        fig.suptitle(f"{title_prefix}{str(self)}{title_suffix}", fontsize='large', y=0.98)
         # fig.set_tight_layout(True)
-        fig.subplots_adjust(hspace=0.1, wspace=0.1)
+        fig.subplots_adjust(hspace=0.1, wspace=0.1, top=0.83)
         
         plt.xticks(fontsize='x-small', rotation=45, ha='right')
         # plt.yticks(fontsize='x-small')
@@ -206,7 +210,7 @@ class RebalanceStrategy(CryptoStrategy):
 
 
     def plot_axes(self, axes, show_legend=True, show_params=True):
-        # axes.margins(x=0)
+        # axes.margins(y=1)
         axes.set_ylabel('Rebalance', fontsize='medium')
 
         steps_data_x = list()
@@ -233,9 +237,10 @@ class RebalanceStrategy(CryptoStrategy):
             axes.legend()
 
         if show_params:
-            params_str = f"min_order_period: {self.params.min_order_period}, rebalance_percents: {self.params.rebalance_percents}"
+            self_details = self.describe()
+            params_str = f"min_order_period: {self_details.get('min_order_period')}, rebalance_percents: {self_details.get('rebalance_percents')}"
             axes.annotate(params_str,
-                          xy=(1.0, -0.2),
+                          xy=(1.0, 0.1),
                           xycoords='axes fraction',
                           ha='right',
                           va="center",

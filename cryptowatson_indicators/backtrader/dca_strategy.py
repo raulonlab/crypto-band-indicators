@@ -21,6 +21,18 @@ class DCAStrategy(CryptoStrategy):
     def __str__(self):
         return  f"DCA {(self.params.buy_amount * self.params.multiplier):.2f}$"
 
+    def describe(self, keys = None):
+        self_dict = super().describe()
+        self_dict['min_order_period'] = self.params.min_order_period
+        self_dict['buy_amount'] = self.params.buy_amount
+        self_dict['multiplier'] = self.params.multiplier
+        self_dict['params'] = f"{self_dict['min_order_period']} days |{self_dict['buy_amount']}$ |x{self_dict['multiplier']}"
+
+        if keys is not None:
+            self_dict = {key: self_dict[key] for key in keys}
+        
+        return self_dict
+
     def next(self):
         # An order is pending ... nothing can be done
         if self.order:
@@ -43,13 +55,13 @@ class DCAStrategy(CryptoStrategy):
         self.order = self.buy(
             size=buy_btc_size)
 
-    def plot(self, show: bool = True):
+    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = ''):
         ticker_data = self.data._dataname
 
         gs_kw = dict(height_ratios=[0.5])
         fig, (ticker_axes) = plt.subplots(
             nrows=1, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))    # constrained_layout=True, figsize=(11, 7)
-        fig.suptitle(str(self), fontsize='large')
+        fig.suptitle(f"{title_prefix}{str(self)}{title_suffix}", fontsize='large')
         # fig.set_tight_layout(True)
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
 

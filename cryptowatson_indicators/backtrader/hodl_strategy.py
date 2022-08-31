@@ -18,6 +18,16 @@ class HodlStrategy(CryptoStrategy):
 
     def __str__(self):
         return  f"HODL {self.params.percent}%"
+    
+    def describe(self, keys = None):
+        self_dict = super().describe()
+        self_dict['percent'] = self.params.percent
+        self_dict['params'] = f"{self_dict['percent']}%"
+
+        if keys is not None:
+            self_dict = {key: self_dict[key] for key in keys}
+        
+        return self_dict
 
     def nextstart(self):
         self.log(
@@ -46,13 +56,13 @@ class HodlStrategy(CryptoStrategy):
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(size=abs(order_btc_size), rebalance_percent=percent)
 
-    def plot(self, show: bool = True):
+    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = ''):
         ticker_data = self.data._dataname
 
         gs_kw = dict(height_ratios=[0.5])
         fig, (ticker_axes) = plt.subplots(
             nrows=1, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))  # constrained_layout=True, figsize=(11, 7)
-        fig.suptitle(str(self), fontsize='large')
+        fig.suptitle(f"{title_prefix}{str(self)}{title_suffix}", fontsize='large')
         # fig.set_tight_layout(True)
         fig.subplots_adjust(hspace=0.1, wspace=0.1)
         
