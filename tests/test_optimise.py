@@ -25,7 +25,10 @@ rainbow_indicator_params={}
 
 # Range variables (to compare optimization)
 min_order_period_list = range(4, 8)              # Minimum period in days to place orders
-indicator_params_list = ({}, )
+indicator_params_list = [None,
+                        {'ta_config': {'kind': 'sma', 'length': 4}},
+                        {'ta_config': {'kind': 'wma', 'length': 3}},
+                        ]
 ma_class_list = [bt.ind.WeightedMovingAverage, 
                  bt.ind.MovingAverageSimple]     # smooth data with ma algorithm 
 
@@ -80,7 +83,7 @@ def run_optimisation_between_dates(start, end):
                     end,
                     strategy_class=RebalanceStrategy,
                     indicator_class=(RainbowBandIndicator,),
-                    indicator_params=indicator_params_list,
+                    # indicator_params=indicator_params_list,
                     ma_class=ma_class_list,
                     min_order_period=min_order_period_list,
                     rebalance_percents=(rwa_rebalance_percents,))
@@ -111,7 +114,7 @@ def run_optimisation_between_dates(start, end):
                     end,
                     strategy_class=WeightedDCAStrategy,
                     indicator_class=(RainbowBandIndicator,),
-                    indicator_params=indicator_params_list,
+                    # indicator_params=indicator_params_list,
                     # ma_class=ma_class_list,   # Not used in Weighed Avg
                     base_buy_amount=(base_buy_amount,),
                     min_order_period=min_order_period_list,
@@ -164,7 +167,7 @@ if __name__ == '__main__':
     # end = '31/07/2020'
 
     # print(f"\nResults between {start} and {end}")
-    # print("----------------------------------------")
+    # print("--------------------------------------------")
     # run_optimisation_between_dates(start, end)
 
 
@@ -172,7 +175,7 @@ if __name__ == '__main__':
     # end = '31/12/2020'
 
     # print(f"\nResults between {start} and {end}")
-    # print("----------------------------------------")
+    # print("--------------------------------------------")
     # run_optimisation_between_dates(start, end)
 
 
@@ -180,7 +183,7 @@ if __name__ == '__main__':
     # end = '31/07/2021'
 
     # print(f"\nResults between {start} and {end}")
-    # print("----------------------------------------")
+    # print("--------------------------------------------")
     # run_optimisation_between_dates(start, end)
 
 
@@ -188,5 +191,5 @@ if __name__ == '__main__':
     end = '31/12/2021'
 
     print(f"\nResults between {start} and {end}")
-    print("----------------------------------------")
+    print("--------------------------------------------")
     run_optimisation_between_dates(start, end)

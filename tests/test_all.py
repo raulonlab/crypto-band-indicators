@@ -22,8 +22,10 @@ initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period = 7              # Minimum period in days to place orders
 base_buy_amount = 100            # Amount purchased in standard DCA
 ma_class = None
-# ma_class = bt.ind.WeightedMovingAverage
+ma_class = bt.ind.WeightedMovingAverage
 # ma_class = bt.ind.MovingAverageSimple
+indicator_params = None
+indicator_params =  {'ta_config': {'kind': 'sma', 'length': 3}}
 
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rainbow_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
@@ -53,6 +55,7 @@ def backtrader_test():
         weighted_multipliers = fng_weighted_multipliers if indicator == "fng" else rainbow_weighted_multipliers
         cerebro.addstrategy(WeightedDCAStrategy, 
                             indicator_class=indicator_class,
+                            indicator_params=indicator_params,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -62,6 +65,7 @@ def backtrader_test():
         rebalance_percents = fng_rebalance_percents if indicator == "fng" else rainbow_rebalance_percents
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=indicator_class,
+                            indicator_params=indicator_params,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             ma_class=ma_class, 
@@ -98,9 +102,7 @@ def backtrader_test():
     pnl_color = f"{LogColors.FAIL}" if strategy_results.pnl_value < 0 else f"{LogColors.OK}"
 
     print(f"\nResults of {str(strategy_results)}")
-    print("----------------------------------------")
-    print(strategy_results.describe())
-    print("----------------------------------------")
+    print("--------------------------------------------")
     print(f"{'Started:':<8} {strategy_results.start_value:>10.2f} USD (1 BTC = {start_btc_price:.2f} USD)")
     print(f"{'Ended:':<8} {strategy_results.end_value:>10.2f} USD (1 BTC = {end_btc_price:.2f} USD)")
     print(f"{'PnL:':<8} {pnl_color}{strategy_results.pnl_value:>+10.2f} USD ({strategy_results.pnl_percent:+.2f}%){LogColors.ENDC}")

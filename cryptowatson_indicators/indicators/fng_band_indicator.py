@@ -13,12 +13,20 @@ class FngBandIndicator(BandIndicatorBase):
     _band_names=      ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
     _band_colors=     ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]  # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
     _band_multipliers=[1.5,            1.25,      1,         0.75,      0.5]
-    def __init__(self, indicator_start_date: Union[str, date, datetime, None] = None, **kvargs):
+    def __init__(self, ta_config: Union[dict, None] = None, indicator_start_date: Union[str, date, datetime, None] = None, **kvargs):
         super().__init__(**kvargs)
 
         # load indicator data if not passed
         if not isinstance(self.data, pd.DataFrame):
-            self.data = FngDataSource().load().to_dataframe(start=indicator_start_date)
+            data_source = FngDataSource().load()
+
+            # add technical analysis column and use it instead of default data column
+            if ta_config is not None and ta_config.get('kind') is not None:
+                data_source.append_ta_columns(ta_config)
+                # Use ta columns as data_column
+                self.data_column = data_source.get_ta_columns()[0]
+
+            self.data = data_source.to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             error_message = f"FngBandIndicator.__init__: No indicator data available"
@@ -120,7 +128,7 @@ class FngBandIndicator(BandIndicatorBase):
         # Plot ma data column
         if self.data_column != self._default_column:
             axes.plot(plot_data.index, plot_data[self.data_column],
-                    color='#000000', alpha=0.5, linewidth=1, label='FnG MA')
+                    color='#333333', alpha=0.5, linewidth=1, label=self.data_column)
 
         # yticks
         axes.set_yticks(self._band_thresholds)
@@ -129,7 +137,7 @@ class FngBandIndicator(BandIndicatorBase):
         # Grid
         axes.grid(axis = 'y', linestyle = '--', linewidth = 0.5)
 
-        # axes.legend()
+        axes.legend()
 
         return axes
 

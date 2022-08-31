@@ -1,6 +1,6 @@
 from __future__ import annotations
 import os
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 import pandas as pd
 import numpy as np
 import pandas_ta as ta
@@ -16,10 +16,10 @@ def _read_csv_cached(file_path) -> pd.DataFrame:
     return pd.read_csv(file_path, sep=';')
 
 
-def _get_ta_ma_strategy(config):
+def _get_ta_ma_strategy(configs):
     return ta.Strategy(
         name="ta_ma_strategy",
-        ta=[config]
+        ta=configs
 )
 
 class DataSourceBase():
@@ -27,6 +27,7 @@ class DataSourceBase():
     index_column = 'date'
     numeric_columns = []
     text_columns = []
+    ta_columns = []
 
     def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):
         self.ticker_symbol = ticker_symbol
@@ -34,6 +35,7 @@ class DataSourceBase():
         self.binance_secret_key = binance_secret_key
 
         self.dataframe = None
+        self.ta_columns = []
         self.disable_fetch = bool(os.environ.get('DISABLE_FETCH', False))
         self.disable_write_cache = bool(os.environ.get('DISABLE_WRITE_CACHE', False))
 
@@ -151,13 +153,24 @@ class DataSourceBase():
             openinterest=None,
         )
 
-    def append_ta_column(self, ta_config: Dict = None, **kwargs) -> DataSourceBase:
+    @synchronized
+    def append_ta_columns(self, ta_configs: Union[List(Dict), Dict], **kwargs) -> DataSourceBase:
         self._validate_dataframe()
 
-        if ta_config is not None:
-            self.dataframe.ta.strategy(_get_ta_ma_strategy(ta_config), **kwargs)
+        if not isinstance(ta_configs, list):
+            ta_configs = [ta_configs]
         
-        return self;
+        self.dataframe.ta.cores = 0     # Disable multiprocessing (conflicts with backtrader)
+        self.dataframe.ta.strategy(_get_ta_ma_strategy(ta_configs), **kwargs)
+
+        # Save columns to be retrieve in get_ta_columns
+        self.ta_columns.extend(self.dataframe.columns[-len(ta_configs):])
+        
+        return self
+    
+    # @synchronized
+    def get_ta_columns(self) -> List(str):
+        return self.ta_columns
 
     def fill_the_gaps(self, start: datetime = None, end: datetime = None) -> DataSourceBase:
         self._validate_dataframe()

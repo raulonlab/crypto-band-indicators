@@ -25,6 +25,7 @@ class WeightedDCAStrategy(CryptoStrategy):
             raise Exception('WeightedDCAStrategy.__init__: parameter indicator_class must be a subclass of BandIndicatorBase')
 
         # Create indicator dinamically with indicator_class and indicator_params
+        if self.params.indicator_params is None: self.params.indicator_params = {}
         self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(**self.params.indicator_params))
 
         self.price = self.data.close

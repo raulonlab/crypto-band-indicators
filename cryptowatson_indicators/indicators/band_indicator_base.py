@@ -15,11 +15,13 @@ class BandIndicatorBase:
     _band_names=[]
     _band_colors=[]
     _default_column = 'close' 
-    data=None
+    data = None
     data_column = 'close'  # select data column: ie: moving average data column
     ticker_symbol = 'BTCUSDT'
-    def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = None, ticker_symbol: str = 'BTCUSDT'):
+    def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = None, ticker_symbol: str = 'BTCUSDT', **kvargs):
         self.ticker_symbol = ticker_symbol
+        self.data = None
+        self.data_column = 'close'  # select data column: ie: moving average data column
         
         if isinstance(data, pd.DataFrame):
             self.data = data

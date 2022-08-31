@@ -25,6 +25,7 @@ class RebalanceStrategy(CryptoStrategy):
             raise Exception('WeightedDCAStrategy.__init__: parameter indicator_class must be a subclass of BandIndicatorBase')
 
         # Create indicator dinamically with indicator_class and indicator_params
+        if self.params.indicator_params is None: self.params.indicator_params = {}
         self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(**self.params.indicator_params))
  
         # Add ma
@@ -155,7 +156,8 @@ class RebalanceStrategy(CryptoStrategy):
         if self.params.ma_class is not None:
             ma_data_array = self.ma.line0.array
             ticker_axes.plot(ticker_data.index, ma_data_array,
-                            color='#333333', linewidth=1, alpha=0.5, linestyle='--')
+                            color='#333333', linewidth=1, alpha=0.5, linestyle='--', label='MA')
+            ticker_axes.legend()
 
         # Ticker yticks: min to max on the left
         ticker_min = ticker_data['close'].min()

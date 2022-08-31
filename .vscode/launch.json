@@ -13,34 +13,34 @@
             "justMyCode": true
         },
         {
-            "name": "Python: tests/bt_fng.py",
+            "name": "Python: tests/test_fng.py",
             "type": "python",
             "request": "launch",
-            "program": "${cwd}/tests/bt_fng.py",
+            "program": "${cwd}/tests/test_fng.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "Python: tests/bt_rwa.py",
+            "name": "Python: tests/test_rwa.py",
             "type": "python",
             "request": "launch",
-            "program": "${cwd}/tests/bt_rwa.py",
+            "program": "${cwd}/tests/test_rwa.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "Python: tests/bt_all.py",
+            "name": "Python: tests/test_all.py",
             "type": "python",
             "request": "launch",
-            "program": "${cwd}/tests/bt_all.py",
+            "program": "${cwd}/tests/test_all.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },
         {
-            "name": "Python: tests/bt_opt_rebalance.py",
+            "name": "Python: tests/test_optimise.py",
             "type": "python",
             "request": "launch",
-            "program": "${cwd}/tests/bt_opt_rebalance.py",
+            "program": "${cwd}/tests/test_optimise.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },

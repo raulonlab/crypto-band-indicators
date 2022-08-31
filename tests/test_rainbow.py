@@ -110,7 +110,7 @@ def backtrader_test():
     pnl_color = f"{LogColors.FAIL}" if end_portfolio_value < start_portfolio_value else f"{LogColors.OK}"
 
     print(f"\nResults of {str(cerebro_results[0])}")
-    print("----------------------------------------")
+    print("--------------------------------------------")
     print(f"{'Started:':<8} {start_portfolio_value:>10.2f} USD (1 BTC = {start_btc_price:.2f} USD)")
     print(f"{'Ended:':<8} {end_portfolio_value:>10.2f} USD ({end_position.size:6f} BTC + {end_cash:.2f} USD in cash | 1 BTC = {end_btc_price:.2f} USD)")
     print(f"{'PnL:':<8} {pnl_color}{pnl_value:>10.2f} USD ({pnl_percent:.2f}%){LogColors.ENDC}")
