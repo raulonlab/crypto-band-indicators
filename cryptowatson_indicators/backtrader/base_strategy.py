@@ -25,6 +25,8 @@ class CryptoStrategy(bt.Strategy):
         self.pnl_value = 0
         self.pnl_percent = 0.0
         self.roi = 0.0
+
+        self.ma = None      # If subclasses doesn't implement ma
     
     def start(self):
         self.start_value = self.broker.getvalue()

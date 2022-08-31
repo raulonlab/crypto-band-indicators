@@ -88,12 +88,6 @@ class WeightedDCAStrategy(CryptoStrategy):
         ticker_axes.plot(ticker_data.index, ticker_data['close'],
                          color='#333333', linewidth=1)
         ticker_axes.tick_params(axis='y', labelsize='x-small')
-
-        # Ticker ma
-        if self.ma is not None:
-            ma_data_array = self.ma.line0.array
-            ticker_axes.plot(ticker_data.index, ma_data_array,
-                            color='#333333', linewidth=1, alpha=0.5, linestyle='--')
         
         # Ticker yticks: min to max on the left
         ticker_min = ticker_data['close'].min()
