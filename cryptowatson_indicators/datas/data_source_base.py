@@ -1,15 +1,12 @@
 from __future__ import annotations
-from logging import exception
 import os
-import threading
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Tuple, Union
 import pandas as pd
 import numpy as np
 import pandas_ta as ta
 import backtrader as bt
 from datetime import datetime, date, timedelta
 from cryptowatson_indicators.utils import parse_any_date
-# from multiprocessing import Manager
 from functools import lru_cache
 from wrapt import synchronized
 
@@ -212,7 +209,7 @@ class DataSourceBase():
 
     def _validate_dataframe(self):
         if not isinstance(self.dataframe, pd.DataFrame):
-            raise exception('Data source not loaded or invalid. Did you forget to call load()?')
+            raise Exception('Data source not loaded or invalid. Did you forget to call load()?')
 
     @classmethod
     def _reindex_dataframes(cls, data1: pd.DataFrame, data2: pd.DataFrame, date_column_name: str = 'Date', start_date: Union[str, date, datetime, None] = None, end_date: Union[str, date, datetime, None] = None) -> pd.DataFrame:

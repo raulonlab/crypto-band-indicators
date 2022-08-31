@@ -1,6 +1,4 @@
 from datetime import date, timedelta
-from logging import exception
-from pprint import pprint
 import backtrader as bt
 import numpy as np
 import pandas as pd

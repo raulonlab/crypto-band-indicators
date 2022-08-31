@@ -1,10 +1,6 @@
 from datetime import date, timedelta
-from inspect import isclass
-from logging import exception
-from pprint import pprint
 import backtrader as bt
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cryptowatson_indicators import utils
@@ -55,16 +51,11 @@ class RebalanceStrategy(CryptoStrategy):
     #         f"R REBALANCE (FIRST). Indicator index: {indicator_index}, rebalance percent: {self.params.rebalance_percents[indicator_index]}", log_color=utils.LogColors.BOLDSTRATEGY)
     #     self.rebalance(self.params.rebalance_percents[indicator_index])
 
-
     def next(self):
         # An order is pending ... nothing can be done
         if self.order:
             self.debug(f"  ...skip: order in progress")
             return
-        # No previous bar executed... nothing can be done
-        # if self.last_bar_executed is None:
-        #     self.debug(f"  ...skip: no previous bar executed yet")
-        #     return
         
         # Only buy every min_order_period days
         last_bar_executed_ago = self.get_last_bar_executed_ago()

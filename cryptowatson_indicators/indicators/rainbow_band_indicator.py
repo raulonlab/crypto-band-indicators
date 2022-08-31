@@ -1,4 +1,3 @@
-from logging import exception
 from typing import Union
 from datetime import datetime, date
 import numpy as np
@@ -10,13 +9,6 @@ from cryptowatson_indicators.datas import TickerDataSource
 from .band_indicator_base import BandIndicatorBase, BandDetails
 from ..utils import utils
 
-# _RAINBOW_BANDS_NAMES = ["Maximum bubble!!", "Sell, seriouly sell!", "FOMO intensifies",
-#                         "Is this a bubble?", "HODL", "Still cheap", "Accumulate", "Buy!", "Fire sale!!"]
-# _RAINBOW_BANDS_COLORS = ['#6b8ed0', '#78acb2', '#84ca95',
-#                          '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
-# _RAINBOW_BANDS_FIBONACCI_MULTIPLIERS = [
-#     0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
-# _RAINBOW_BANDS_ORIGINAL_MULTIPLIERS = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
 _FITTED_BAND_LOG_MULTIPLIER = .455
 
 def _rainbow_logarithmic_function(x, a, b, c):
@@ -45,7 +37,7 @@ class RainbowBandIndicator(BandIndicatorBase):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"RainbowBandIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
-            raise exception(error_message)
+            raise Exception(error_message)
 
         # calculate fitted data columns
         # getting your x and y data from the dataframe
@@ -240,7 +232,5 @@ class RainbowBandIndicator(BandIndicatorBase):
         band_axis.set_yticks(rainbow_band_yticks)
         band_axis.set_yticklabels(
             [f"{rainbow_band_ytick:.2f}" for rainbow_band_ytick in rainbow_band_yticks])
-
-        # axes2.axvline(x=self.indicator_data.index.max(), color='#333333', linewidth=1)  # label='Today'
 
         plt.show()

@@ -1,5 +1,4 @@
-from logging import exception
-from typing import Dict, Tuple, Union
+from typing import Union
 from datetime import datetime, date
 import numpy as np
 import pandas as pd
@@ -9,22 +8,10 @@ from cryptowatson_indicators.datas import FngDataSource
 from cryptowatson_indicators import utils
 from .band_indicator_base import BandIndicatorBase, BandDetails
 
-# 0-25: Extreme Fear
-# 26-46: Fear
-# 47-54: Neutral
-# 55-75: Greed
-# 76-100: Extreme Greed
-# _FNG_THRESHOLDS = [25,             46,        54,        75,        100]
-# _FNG_NAMES = ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
-# https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
-# _FNG_COLORS = ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
-# _FNG_MULTIPLIERS = [1.5,            1.25,      1,         0.75,      0.5]
-
-
 class FngBandIndicator(BandIndicatorBase):
     _band_thresholds= [25,             46,        54,        75,        100]
     _band_names=      ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
-    _band_colors=     ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]
+    _band_colors=     ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]  # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
     _band_multipliers=[1.5,            1.25,      1,         0.75,      0.5]
     def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
         self.ticker_symbol = ticker_symbol
@@ -41,7 +28,7 @@ class FngBandIndicator(BandIndicatorBase):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             error_message = f"FngBandIndicator.constructor: No indicator data available"
             print(f"[error] {error_message}")
-            raise exception(error_message)
+            raise Exception(error_message)
 
     def get_band_at(self, at_date: Union[str, date, datetime, None] = None, **kvargs) -> Union[int, None]:
         value_at = self.get_value_at(at_date=at_date)
@@ -121,16 +108,17 @@ class FngBandIndicator(BandIndicatorBase):
         range5 = plot_data[plot_data[self.data_column].between(
             75, 100, inclusive='right')]
 
+        c = self._band_colors
         axes.bar(range1.index, range1[self.data_column],
-                 color='#C05840')  # , width, yerr=menStd
+                 color=c[0])
         axes.bar(range2.index, range2[self.data_column],
-                 color='#FC9A24')  # , width, yerr=menStd
+                 color=[1])
         axes.bar(range3.index, range3[self.data_column],
-                 color='#E5C769')  # , width, yerr=menStd
+                 color=[2])
         axes.bar(range4.index, range4[self.data_column],
-                 color='#B4E168')  # , width, yerr=menStd
+                 color=[3])
         axes.bar(range5.index, range5[self.data_column],
-                 color='#5CBC3C')  # , width, yerr=menStd
+                 color=[4])
 
         # Plot MA line
         # if ma_data_column is not None:
@@ -151,32 +139,6 @@ class FngBandIndicator(BandIndicatorBase):
     def __str__(self):
         return 'Fear and Greed'
 
-    # @classmethod
-    # def _get_fng_value_details(cls, value: int = -1) -> dict:
-    #     if (value is None or value < 0 or value > 100):
-    #         return dict()
-
-    #     # Get index
-    #     index = 0
-    #     if (0 <= value < self._band_thresholds[0]):
-    #         index = 0
-    #     elif (self._band_thresholds[0] <= value < self._band_thresholds[1]):
-    #         index = 1
-    #     elif (self._band_thresholds[1] <= value <= self._band_thresholds[2]):
-    #         index = 2
-    #     elif (self._band_thresholds[2] < value <= self._band_thresholds[3]):
-    #         index = 3
-    #     elif (self._band_thresholds[3] < value <= self._band_thresholds[4]):
-    #         index = 4
-
-    #     return {
-    #         'fng_index': index,
-    #         'fng_ordinal': f"{index + 1}/5",
-    #         'name': _FNG_NAMES[index],
-    #         'color': _FNG_COLORS[index],
-    #         'multiplier': _FNG_MULTIPLIERS[index],
-    #     }
-    
     def plot_fng(self):
         if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
             print(f"[warn] FngBandIndicator.plot_fng: No indicator data available")
@@ -196,19 +158,18 @@ class FngBandIndicator(BandIndicatorBase):
         range5 = self.indicator_data[self.indicator_data[self.data_column].between(
             75, 100, inclusive='right')]
 
+        c = self._band_colors
         axes.bar(range1.index, range1[self.data_column],
-                 color='#C05840')  # , width, yerr=menStd
+                 color=c[0])
         axes.bar(range2.index, range2[self.data_column],
-                 color='#FC9A24')  # , width, yerr=menStd
+                 color=[1])
         axes.bar(range3.index, range3[self.data_column],
-                 color='#E5C769')  # , width, yerr=menStd
+                 color=[2])
         axes.bar(range4.index, range4[self.data_column],
-                 color='#B4E168')  # , width, yerr=menStd
+                 color=[3])
         axes.bar(range5.index, range5[self.data_column],
-                 color='#5CBC3C')  # , width, yerr=menStd
+                 color=[4])
 
-        # ax.axhline(0, color='grey', linewidth=0.8)
-        # axes.set_xlabel('Date')
         axes.set_ylabel('FnG')
         axes.set_title('Fear and Greed history')
 
@@ -223,11 +184,6 @@ class FngBandIndicator(BandIndicatorBase):
 
         axes.set_xticks(fng_xticks)
         plt.xticks(fontsize=8, rotation=45, ha='right')
-
-        # Label with label_type 'center' instead of the default 'edge'
-        # ax.bar_label(p1, label_type='center')
-        # ax.bar_label(p2, label_type='center')
-        # ax.bar_label(p2)
 
         plt.show()
 
@@ -261,16 +217,17 @@ class FngBandIndicator(BandIndicatorBase):
         range5 = self.indicator_data[self.indicator_data[self.data_column].between(
             75, 100, inclusive='right')]
 
+        c = self._band_colors
         axes.bar(range1.index, range1[self.data_column],
-                 color='#C05840')  # , width, yerr=menStd
+                 color=c[0])
         axes.bar(range2.index, range2[self.data_column],
-                 color='#FC9A24')  # , width, yerr=menStd
+                 color=[1])
         axes.bar(range3.index, range3[self.data_column],
-                 color='#E5C769')  # , width, yerr=menStd
+                 color=[2])
         axes.bar(range4.index, range4[self.data_column],
-                 color='#B4E168')  # , width, yerr=menStd
+                 color=[3])
         axes.bar(range5.index, range5[self.data_column],
-                 color='#5CBC3C')  # , width, yerr=menStd
+                 color=[4])
 
         # fng ticks
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
@@ -298,10 +255,6 @@ class FngBandIndicator(BandIndicatorBase):
         ticker_yticks[0] = 0
         ticker_yticks[-1] = ticker_max_value
         axes2.set_yticks(ticker_yticks)
-
-        # horizontal line with latest ticker value
-        # ticker_latest_value = ticker_data.iloc[-1, 1]
-        # axes2.axhline(y=ticker_latest_value, color='#dedede', linewidth=0.5, linestyle='--', zorder=-1)
 
         plt.show()
 
@@ -342,17 +295,17 @@ class FngBandIndicator(BandIndicatorBase):
         range5 = merged_data[merged_data['ValueFng'].between(
             75, 100, inclusive='right')]
 
-        fng_axes.bar(range1.index, range1['ValueFng'],
-                     color='#C05840')  # , width, yerr=menStd
-        fng_axes.bar(range2.index, range2['ValueFng'],
-                     color='#FC9A24')  # , width, yerr=menStd
-        fng_axes.bar(range3.index, range3['ValueFng'],
-                     color='#E5C769')  # , width, yerr=menStd
-        fng_axes.bar(range4.index, range4['ValueFng'],
-                     color='#B4E168')  # , width, yerr=menStd
-        fng_axes.bar(range5.index, range5['ValueFng'],
-                     color='#5CBC3C')  # , width, yerr=menStd
-
+        c = self._band_colors
+        fng_axes.bar(range1.index, range1[self.data_column],
+                 color=c[0])
+        fng_axes.bar(range2.index, range2[self.data_column],
+                 color=[1])
+        fng_axes.bar(range3.index, range3[self.data_column],
+                 color=[2])
+        fng_axes.bar(range4.index, range4[self.data_column],
+                 color=[3])
+        fng_axes.bar(range5.index, range5[self.data_column],
+                 color=[4])
         # fng ticks
         fng_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
         fng_data_length = len(self.indicator_data)

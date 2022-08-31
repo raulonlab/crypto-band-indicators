@@ -105,9 +105,6 @@ class DCAStrategy(CryptoStrategy):
         ticker_axes.set(xlim=xlim, xticks=xticks)
 
         # Show plot
-        # plt.rcParams['figure.figsize'] = [12, 8]
-        # plt.rcParams['figure.dpi'] = 200
-        # plt.rcParams['savefig.dpi'] = 200
         if show:
             plt.show()
 
