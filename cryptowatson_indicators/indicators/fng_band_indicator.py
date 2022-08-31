@@ -13,20 +13,15 @@ class FngBandIndicator(BandIndicatorBase):
     _band_names=      ["Extreme Fear", "Fear",    "Neutral", "Greed",   "Extreme Greed"]
     _band_colors=     ["#C05840",      "#FC9A24", "#E5C769", "#B4E168", "#5CBC3C"]  # https://colordesigner.io/gradient-generator/?mode=rgb#DE2121-21DE21
     _band_multipliers=[1.5,            1.25,      1,         0.75,      0.5]
-    def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = ''):
-        self.ticker_symbol = ticker_symbol
-        self.binance_api_key = binance_api_key
-        self.binance_secret_key = binance_secret_key
-        self.data_column = data_column
+    def __init__(self, indicator_start_date: Union[str, date, datetime, None] = None, **kvargs):
+        super().__init__(**kvargs)
 
-        # load indicator data
-        if isinstance(data, pd.DataFrame):
-            self.indicator_data = data
-        else:
-            self.indicator_data = FngDataSource().load().to_dataframe(start=indicator_start_date)
+        # load indicator data if not passed
+        if not isinstance(self.data, pd.DataFrame):
+            self.data = FngDataSource().load().to_dataframe(start=indicator_start_date)
 
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            error_message = f"FngBandIndicator.constructor: No indicator data available"
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
+            error_message = f"FngBandIndicator.__init__: No indicator data available"
             print(f"[error] {error_message}")
             raise Exception(error_message)
 
@@ -67,15 +62,15 @@ class FngBandIndicator(BandIndicatorBase):
         return band_details_at
 
     def get_value_at(self, at_date: Union[str, date, datetime, None] = None, **kvargs) -> Union[int, None]:
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(f"[warn] FngBandIndicator.get_value_at: No indicator data available")
             return None
 
         at_date = utils.parse_any_date(at_date)
         if not at_date:
-            at_date = self.indicator_data.index.max().date()
+            at_date = self.data.index.max().date()
 
-        value_serie_at = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+        value_serie_at = self.data[self.data.index == pd.to_datetime(
             at_date)]
         if (value_serie_at.empty):
             print(
@@ -88,7 +83,9 @@ class FngBandIndicator(BandIndicatorBase):
 
 
     def plot_axes(self, axes, start=None, end=None):
-        plot_data = self.indicator_data
+        plot_data = self.data
+        plot_data_column = self._default_column
+
         # Filter start and end
         if start is not None:
             plot_data = plot_data[plot_data.index >= start]
@@ -97,33 +94,33 @@ class FngBandIndicator(BandIndicatorBase):
 
         axes.set_ylabel('FnG Index', fontsize='medium')
 
-        range1 = plot_data[plot_data[self.data_column].between(
+        range1 = plot_data[plot_data[plot_data_column].between(
             0, 25, inclusive='left')]
-        range2 = plot_data[plot_data[self.data_column].between(
+        range2 = plot_data[plot_data[plot_data_column].between(
             25, 46, inclusive='left')]
-        range3 = plot_data[plot_data[self.data_column].between(
+        range3 = plot_data[plot_data[plot_data_column].between(
             46, 54, inclusive='both')]
-        range4 = plot_data[plot_data[self.data_column].between(
+        range4 = plot_data[plot_data[plot_data_column].between(
             54, 75, inclusive='right')]
-        range5 = plot_data[plot_data[self.data_column].between(
+        range5 = plot_data[plot_data[plot_data_column].between(
             75, 100, inclusive='right')]
 
         c = self._band_colors
-        axes.bar(range1.index, range1[self.data_column],
+        axes.bar(range1.index, range1[plot_data_column],
                  color=c[0])
-        axes.bar(range2.index, range2[self.data_column],
-                 color=[1])
-        axes.bar(range3.index, range3[self.data_column],
-                 color=[2])
-        axes.bar(range4.index, range4[self.data_column],
-                 color=[3])
-        axes.bar(range5.index, range5[self.data_column],
-                 color=[4])
+        axes.bar(range2.index, range2[plot_data_column],
+                 color=c[1])
+        axes.bar(range3.index, range3[plot_data_column],
+                 color=c[2])
+        axes.bar(range4.index, range4[plot_data_column],
+                 color=c[3])
+        axes.bar(range5.index, range5[plot_data_column],
+                 color=c[4])
 
-        # Plot MA line
-        # if ma_data_column is not None:
-        #     axes.plot(plot_data.index, plot_data[ma_data_column],
-        #             color='#000000', alpha=0.5, linewidth=1, label='FnG MA')
+        # Plot ma data column
+        if self.data_column != self._default_column:
+            axes.plot(plot_data.index, plot_data[self.data_column],
+                    color='#000000', alpha=0.5, linewidth=1, label='FnG MA')
 
         # yticks
         axes.set_yticks(self._band_thresholds)
@@ -140,35 +137,35 @@ class FngBandIndicator(BandIndicatorBase):
         return 'Fear and Greed'
 
     def plot_fng(self):
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(f"[warn] FngBandIndicator.plot_fng: No indicator data available")
             return None
 
         fig, axes = plt.subplots()
 
         # Consider using pivot(): https://pandas.pydata.org/pandas-docs/dev/getting_started/intro_tutorials/09_timeseries.html#datetime-as-index
-        range1 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range1 = self.data[self.data[self.data_column].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range2 = self.data[self.data[self.data_column].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range3 = self.data[self.data[self.data_column].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range4 = self.data[self.data[self.data_column].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range5 = self.data[self.data[self.data_column].between(
             75, 100, inclusive='right')]
 
         c = self._band_colors
         axes.bar(range1.index, range1[self.data_column],
                  color=c[0])
         axes.bar(range2.index, range2[self.data_column],
-                 color=[1])
+                 color=c[1])
         axes.bar(range3.index, range3[self.data_column],
-                 color=[2])
+                 color=c[2])
         axes.bar(range4.index, range4[self.data_column],
-                 color=[3])
+                 color=c[3])
         axes.bar(range5.index, range5[self.data_column],
-                 color=[4])
+                 color=c[4])
 
         axes.set_ylabel('FnG')
         axes.set_title('Fear and Greed history')
@@ -176,11 +173,11 @@ class FngBandIndicator(BandIndicatorBase):
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
         # Set xticks
-        fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(
+        fng_data_length = len(self.data)
+        fng_xticks = self.data.iloc[::int(
             fng_data_length/20)].index.to_list()
-        fng_xticks[0] = self.indicator_data.index.min()
-        fng_xticks[-1] = self.indicator_data.index.max()
+        fng_xticks[0] = self.data.index.min()
+        fng_xticks[-1] = self.data.index.max()
 
         axes.set_xticks(fng_xticks)
         plt.xticks(fontsize=8, rotation=45, ha='right')
@@ -188,7 +185,7 @@ class FngBandIndicator(BandIndicatorBase):
         plt.show()
 
     def plot_fng_and_ticker_price(self, ticker_data: pd.DataFrame):
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(
                 f"[warn] FngBandIndicator.plot_fng_and_ticker_price: No indicator data available")
             return None
@@ -206,38 +203,38 @@ class FngBandIndicator(BandIndicatorBase):
         plt.yticks(fontsize='small')
 
         # fng chart ########
-        range1 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range1 = self.data[self.data[self.data_column].between(
             0, 25, inclusive='left')]
-        range2 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range2 = self.data[self.data[self.data_column].between(
             25, 46, inclusive='left')]
-        range3 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range3 = self.data[self.data[self.data_column].between(
             46, 54, inclusive='both')]
-        range4 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range4 = self.data[self.data[self.data_column].between(
             54, 75, inclusive='right')]
-        range5 = self.indicator_data[self.indicator_data[self.data_column].between(
+        range5 = self.data[self.data[self.data_column].between(
             75, 100, inclusive='right')]
 
         c = self._band_colors
         axes.bar(range1.index, range1[self.data_column],
                  color=c[0])
         axes.bar(range2.index, range2[self.data_column],
-                 color=[1])
+                 color=c[1])
         axes.bar(range3.index, range3[self.data_column],
-                 color=[2])
+                 color=c[2])
         axes.bar(range4.index, range4[self.data_column],
-                 color=[3])
+                 color=c[3])
         axes.bar(range5.index, range5[self.data_column],
-                 color=[4])
+                 color=c[4])
 
         # fng ticks
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
         # Get index positions for xticks
-        fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(
+        fng_data_length = len(self.data)
+        fng_xticks = self.data.iloc[::int(
             fng_data_length/20)].index.to_list()
-        fng_xticks[0] = self.indicator_data.index.min()
-        fng_xticks[-1] = self.indicator_data.index.max()
+        fng_xticks[0] = self.data.index.min()
+        fng_xticks[-1] = self.data.index.max()
 
         axes.set_xticks(fng_xticks)
         axes.set_yticks([0, 25, 46, 54, 75, 100])
@@ -259,7 +256,7 @@ class FngBandIndicator(BandIndicatorBase):
         plt.show()
 
     def plot_fng_and_ticker_price_2(self, ticker_data: pd.DataFrame):
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(
                 f"[warn] FngBandIndicator.plot_fng_and_ticker_price_2: No indicator data available")
             return None
@@ -281,7 +278,7 @@ class FngBandIndicator(BandIndicatorBase):
         plt.yticks(fontsize='small')
 
         # fng chart ########
-        merged_data = pd.merge(self.indicator_data, ticker_data,
+        merged_data = pd.merge(self.data, ticker_data,
                                how='inner', on='Date', suffixes=('FngBandIndicator', 'Ticker'))
 
         range1 = merged_data[merged_data['ValueFng'].between(
@@ -299,20 +296,20 @@ class FngBandIndicator(BandIndicatorBase):
         fng_axes.bar(range1.index, range1[self.data_column],
                  color=c[0])
         fng_axes.bar(range2.index, range2[self.data_column],
-                 color=[1])
+                 color=c[1])
         fng_axes.bar(range3.index, range3[self.data_column],
-                 color=[2])
+                 color=c[2])
         fng_axes.bar(range4.index, range4[self.data_column],
-                 color=[3])
+                 color=c[3])
         fng_axes.bar(range5.index, range5[self.data_column],
-                 color=[4])
+                 color=c[4])
         # fng ticks
         fng_axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        fng_data_length = len(self.indicator_data)
-        fng_xticks = self.indicator_data.iloc[::int(
+        fng_data_length = len(self.data)
+        fng_xticks = self.data.iloc[::int(
             fng_data_length/20)].index.to_list()
-        fng_xticks[0] = self.indicator_data.index.min()
-        fng_xticks[-1] = self.indicator_data.index.max()
+        fng_xticks[0] = self.data.index.min()
+        fng_xticks[-1] = self.data.index.max()
         fng_axes.set_xticks(fng_xticks)
         fng_axes.set_yticks([0, 25, 46, 54, 75, 100])
 

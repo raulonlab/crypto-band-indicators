@@ -22,38 +22,36 @@ class RainbowBandIndicator(BandIndicatorBase):
                          '#c0de9a', '#feed94', '#f8c37d', '#f1975e', '#df6a4d', '#cf463f']
     _band_multipliers=[0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]
     _band_multipliers_fibonacci=[0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
-    def __init__(self, data: Union[pd.DataFrame, None] = None, data_column: str = 'close', indicator_start_date: Union[str, date, datetime, None] = None, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = '', binance_secret_key: str = '', fitted_multiplier: float = _FITTED_BAND_LOG_MULTIPLIER):
-        self.ticker_symbol = ticker_symbol
+    def __init__(self, indicator_start_date: Union[str, date, datetime, None] = None, binance_api_key: str = '', binance_secret_key: str = '', fitted_multiplier: float = _FITTED_BAND_LOG_MULTIPLIER, **kvargs):
+        super().__init__(**kvargs)
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
-        self.data_column = data_column
 
-        # load indicator data
-        if isinstance(data, pd.DataFrame):
-            self.indicator_data = data
-        else:
-            self.indicator_data = TickerDataSource().load().to_dataframe(start=indicator_start_date)
+        # load indicator data if not passed
+        if not isinstance(self.data, pd.DataFrame):
+            self.data = TickerDataSource().load().to_dataframe(start=indicator_start_date)
 
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
-            error_message = f"RainbowBandIndicator.constructor: No indicator data available"
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
+            error_message = f"RainbowBandIndicator.__init__: No indicator data available"
             print(f"[error] {error_message}")
             raise Exception(error_message)
 
+
         # calculate fitted data columns
         # getting your x and y data from the dataframe
-        xdata = np.array([x + 1 for x in range(len(self.indicator_data))])
-        ydata = np.log(self.indicator_data[self.data_column])
+        xdata = np.array([x + 1 for x in range(len(self.data))])
+        ydata = np.log(self.data[self.data_column])
         # here we ar fitting the curve, you can use 2 data points however I wasn't able to get a graph that looked as good with just 2 points.
         # p0=[10, 100, 90], p0 is justa guess, doesn't matter as far as I know
         popt, pcov = curve_fit(
             _rainbow_logarithmic_function, xdata, ydata)
+        
         # This is our fitted data, remember we will need to get the ex of it to graph it
-
         self.fittedYData = _rainbow_logarithmic_function(
             xdata, popt[0], popt[1], popt[2])
         # Add columns with rainbow coordenates
         for i in range(-3, 7):
-            self.indicator_data[f"fitted_data{i}"] = np.exp(
+            self.data[f"fitted_data{i}"] = np.exp(
                 self.fittedYData + i * fitted_multiplier)
 
 
@@ -65,7 +63,7 @@ class RainbowBandIndicator(BandIndicatorBase):
 
 
     def get_band_at(self, price: float = None, at_date: Union[str, date, datetime, None] = None) -> Union[int, None]:
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(
                 f"[warn] RainbowBandIndicator.get_band_at: No historical data available")
             return None
@@ -75,9 +73,9 @@ class RainbowBandIndicator(BandIndicatorBase):
 
         at_date = utils.parse_any_date(at_date)
         if not at_date:
-            at_date = self.indicator_data.index.max().date()
+            at_date = self.data.index.max().date()
 
-        rainbow_serie_at = self.indicator_data[self.indicator_data.index == pd.to_datetime(
+        rainbow_serie_at = self.data[self.data.index == pd.to_datetime(
             at_date)]
         if (rainbow_serie_at.empty):
             print(
@@ -141,7 +139,9 @@ class RainbowBandIndicator(BandIndicatorBase):
 
     
     def plot_axes(self, axes, start=None, end=None):
-        plot_data = self.indicator_data
+        plot_data = self.data
+        plot_data_column = self._default_column
+
         if start is not None:
             plot_data = plot_data[plot_data.index >= start]
         if end is not None:
@@ -151,7 +151,7 @@ class RainbowBandIndicator(BandIndicatorBase):
 
         # Draw bitcoin price
         axes.semilogy(
-            plot_data.index, plot_data[self.data_column], color='#333333', linewidth=1)
+            plot_data.index, plot_data[plot_data_column], color='#333333', linewidth=1)
 
         # Draw the rainbow bands
         for i in range(-2, 7):
@@ -187,11 +187,11 @@ class RainbowBandIndicator(BandIndicatorBase):
         return 'Rainbow'
 
     def plot_rainbow(self):
-        if not isinstance(self.indicator_data, pd.DataFrame) or self.indicator_data.empty:
+        if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             print(f"[warn] plot_rainbow: No historical data available")
             return None
 
-        latest_serie = self.indicator_data.iloc[-1]
+        latest_serie = self.data.iloc[-1]
 
         fig, axes = plt.subplots()
         fig.suptitle('Bitcoin Rainbow Chart', fontsize='large')
@@ -201,24 +201,24 @@ class RainbowBandIndicator(BandIndicatorBase):
 
         # Draw bitcoin price
         axes.semilogy(
-            self.indicator_data.index, self.indicator_data[self.data_column], color='#333333', linewidth=0.75)
+            self.data.index, self.data[self.data_column], color='#333333', linewidth=0.75)
 
         # Draw the rainbow bands
         for i in range(-2, 7):
             # You can use the below plot fill between rather than the above line plot, I prefer the line graph
-            axes.fill_between(self.indicator_data.index, self.indicator_data[f"fitted_data{i-1}"],
-                              self.indicator_data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=self._band_colors[i+2])
-            axes.plot(self.indicator_data.index,
-                      self.indicator_data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=self._band_colors[i+2])
+            axes.fill_between(self.data.index, self.data[f"fitted_data{i-1}"],
+                              self.data[f"fitted_data{i}"], alpha=0.8, linewidth=1, color=self._band_colors[i+2])
+            axes.plot(self.data.index,
+                      self.data[f"fitted_data{i}"], linewidth=1.5, markersize=0.5, color=self._band_colors[i+2])
 
         axes.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 
         # Set xticks
-        rwa_data_length = len(self.indicator_data)
-        rwa_xticks = self.indicator_data.iloc[::int(
+        rwa_data_length = len(self.data)
+        rwa_xticks = self.data.iloc[::int(
             rwa_data_length/20)].index.to_list()
-        rwa_xticks[0] = self.indicator_data.index.min()
-        rwa_xticks[-1] = self.indicator_data.index.max()
+        rwa_xticks[0] = self.data.index.min()
+        rwa_xticks[-1] = self.data.index.max()
         axes.set_xticks(rwa_xticks)
         plt.xticks(fontsize=8, rotation=45, ha='right')
 
