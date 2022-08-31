@@ -1,33 +1,31 @@
 from datetime import date, timedelta
 import backtrader as bt
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cryptowatson_indicators import utils
-from cryptowatson_indicators.backtrader.indicator_wrappers import BandIndicatorWrapper
+from cryptowatson_indicators.indicators import BandIndicatorBase
+from .indicator_wrappers import BandIndicatorWrapper
 from .base_strategy import CryptoStrategy
 
 class WeightedDCAStrategy(CryptoStrategy):
     # list of parameters which are configurable for the strategy
     params = dict(
-        band_indicator=None,
+        indicator_class=None,
+        indicator_params={},
         base_buy_amount=100,   # amount base to buy, to be multiplied by weighted multiplier
         min_order_period=7,        # number of days between buys
         weighted_multipliers=[1],  # multiplier to apply depending on indicator index
-        ma_class=None,
     )
 
     def __init__(self):
         super().__init__()
 
-        self.indicator = BandIndicatorWrapper(band_indicator=self.params.band_indicator)
+        if not issubclass(self.params.indicator_class, BandIndicatorBase):
+            raise Exception('WeightedDCAStrategy.__init__: parameter indicator_class must be a subclass of BandIndicatorBase')
 
-        # Add ma
-        if self.params.ma_class is not None:
-            self.ma = self.params.ma_class(period=self.params.min_order_period)    # self.params.min_order_period
-        else:
-            self.ma = None
+        # Create indicator dinamically with indicator_class and indicator_params
+        self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(**self.params.indicator_params))
 
         self.price = self.data.close
 

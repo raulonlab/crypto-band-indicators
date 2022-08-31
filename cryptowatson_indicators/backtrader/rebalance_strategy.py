@@ -4,23 +4,28 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from cryptowatson_indicators import utils
-from cryptowatson_indicators.backtrader.indicator_wrappers import BandIndicatorWrapper
+from cryptowatson_indicators.indicators import BandIndicatorBase
+from .indicator_wrappers import BandIndicatorWrapper
 from .base_strategy import CryptoStrategy
 
 
 class RebalanceStrategy(CryptoStrategy):
     # list of parameters which are configurable for the strategy
     params = dict(
-        band_indicator=None,
+        indicator_class=None,
+        indicator_params={},
         min_order_period=7,        # Number of days between buys
         rebalance_percents=[100],  # rebalance percents to apply depending on indicator index
-        ma_class=None,
     )
 
     def __init__(self):
         super().__init__()
 
-        self.indicator = BandIndicatorWrapper(band_indicator=self.params.band_indicator)
+        if not issubclass(self.params.indicator_class, BandIndicatorBase):
+            raise Exception('WeightedDCAStrategy.__init__: parameter indicator_class must be a subclass of BandIndicatorBase')
+
+        # Create indicator dinamically with indicator_class and indicator_params
+        self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(**self.params.indicator_params))
  
         # Add ma
         if self.params.ma_class is not None:

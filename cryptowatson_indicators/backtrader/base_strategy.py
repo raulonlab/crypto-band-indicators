@@ -9,6 +9,7 @@ from cryptowatson_indicators import utils
 class CryptoStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
+        ma_class=None,          # Optional parameter to smooth ma to data
         log=bool(os.environ.get('ENABLE_LOG', False)),              # Enable log messages
         debug=bool(os.environ.get('ENABLE_DEBUG', False)),           # Enable debug messages
     )

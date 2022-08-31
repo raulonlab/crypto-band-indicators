@@ -46,13 +46,13 @@ def backtrader_test():
     cerebro = bt.Cerebro(stdstats=True, runonce=True)
     cerebro.broker.set_coc(True)
 
-    band_indicator = FngBandIndicator() if indicator == "fng" else RainbowBandIndicator()
+    indicator_class = FngBandIndicator if indicator == "fng" else RainbowBandIndicator
 
     if strategy == "weighted_dca":
         # WeightedDCAStrategy
         weighted_multipliers = fng_weighted_multipliers if indicator == "fng" else rainbow_weighted_multipliers
         cerebro.addstrategy(WeightedDCAStrategy, 
-                            band_indicator=band_indicator,
+                            indicator_class=indicator_class,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -61,7 +61,7 @@ def backtrader_test():
     elif strategy == "rebalance":
         rebalance_percents = fng_rebalance_percents if indicator == "fng" else rainbow_rebalance_percents
         cerebro.addstrategy(RebalanceStrategy, 
-                            band_indicator=band_indicator,
+                            indicator_class=indicator_class,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             ma_class=ma_class, 
