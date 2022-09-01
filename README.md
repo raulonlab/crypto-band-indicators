@@ -1,14 +1,36 @@
-# cryptowatson-indicators
+# crypto-band-indicators
 
-Implementation of crypto trading indicators and strategies based on the indexes `Fear and Greed` and `Rainbow Price`.
+Implementation of crypto indicators and strategies based on indexes that can be divided or grouped in bands. Any index with a known range of values is suitable to be divided in bands by taking the range of the data (largest minus smallest) and divide it by the number of desired bands.
 
-Also includes simulators (backtests) of the strategies in Jupyter notebooks (using [backtrader](https://www.backtrader.com/)):
+The library contains the implementation of the indicators: 
+- `Fear and Greed`,
+- `Rainbow Index`,
 
-- Fear and Greed simulator [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
+And the strategies:
+- `Rebalance`,
+- `Weighted DCA`
 
-- Rainbow simulator [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/rwa_simulator.ipynb)
+There are also 2 simulators written in Jupyter notebooks to backtest the performance of the indicators / strategies:
+
+- Compare strategies: Run a simulation of the indicators / strategies for a given set of parameters and dates [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raulonlab/crypto-band-indicators/blob/main/simulators/compare_strategies.ipynb)
+
+- Optimise strategies: Run a simulation of the indicators / strategies in order to get the best parameters [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raulonlab/crypto-band-indicators/blob/main/simulators/optimise_strategies.ipynb)
 
 ## Indicators
+
+### Fear and Greed
+
+The Fear and Greed Index is a tool that helps investors and traders analyze the Bitcoin and Crypto market from a sentiment perspective. It identifies the extent to which the market is becoming overly fearful or overly greedy. Hence why it is called the Fear and Greed Index.
+
+- See the live version for Bitcoin in [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-fear-and-greed-index/)
+
+The Fear and Greed index has a value in the range (0, 100) and is divided in 5 bands ordered from best (Fear) to worst (Greed):
+
+1. ( 0-25):  Extreme Fear
+2. (26-46):  Fear
+3. (47-54):  Neutral
+4. (55-75):  Greed
+5. (76-100): Extreme Greed
 
 ### Rainbow Chart
 
@@ -20,7 +42,7 @@ See a live version for Bitcoin in [lookintobitcoin](https://www.lookintobitcoin.
 
 And for Ethereum in [blockchaincenter](https://www.blockchaincenter.net/ethereum-rainbow-chart/)
 
-The Rainbow Chart is divided in 9 bands. being the 1st the worst to buy (expensive), and the 9th the best (cheap):
+The Rainbow Chart is divided in 9 bands ordered from worst (expensive) to best (cheap):
 
 1. Maximum bubble!!
 2. Sell, seriouly sell!
@@ -32,21 +54,15 @@ The Rainbow Chart is divided in 9 bands. being the 1st the worst to buy (expensi
 8. Buy!
 9. Fire sale!!
 
-### Fear and Greed
-
-The Fear and Greed Index is a tool that helps investors and traders analyze the Bitcoin and Crypto market from a sentiment perspective. It identifies the extent to which the market is becoming overly fearful or overly greedy. Hence why it is called the Fear and Greed Index.
-
-- See the live version for Bitcoin in [lookintobitcoin](https://www.lookintobitcoin.com/charts/bitcoin-fear-and-greed-index/)
-
-The Fear and Greed index has a value in the range (0, 100) and is divided in 5 bands, being the 1st the best to buy (Fear), and the 5th the worst (Greed):
-
-1. ( 0-25):  Extreme Fear
-2. (26-46):  Fear
-3. (47-54):  Neutral
-4. (55-75):  Greed
-5. (76-100): Extreme Greed
-
 ## Strategies
+
+### Rebalance 
+
+Applies a rebalance percentage of the position between BTC and USDT depending on the indicator band. The better band index, the more percentage of BTC against USDT is kept in the wallet over the total value in USDT.
+
+#### Parameters
+- **rebalance_percents**: Rebalance percentages of BTC over USDT for each band. Ex: [85, 65, 50, 15, 10]
+- **min_order_period**: Minimum interval of days between consecutive orders. Ex: 5
 
 ### Weighted Averaging DCA
 
@@ -57,35 +73,41 @@ The idea of applying this strategy with the Rainbow index comes from [this post 
 #### Parameters
 
 - **base_buy_amount**: Amount base to buy, as in standard DCA
-- **weighted_multipliers**: Amount multipliers (weighted) for each band. Ex: [1.5, 1.25, 1, 0.75, 0.5]
+- **weighted_multipliers**: Buy amount multipliers (weight) for each band. Ex: [1.5, 1.25, 1, 0.75, 0.5]
 - **min_order_period**: Interval of days between periodical orders. Ex: 5
-
-### Rebalance 
-
-Applies a rebalance percentage of the position between BTC and USDT depending on the indicator index. The better index, the more percentage of BTC against USDT is kept in the wallet over the total value in USDT.
-
-#### Parameters
-- **rebalance_percents**: Rebalance percentages of BTC over USDT for each band. Ex: [85, 65, 50, 15, 10]
-- **min_order_period**: Minimum interval of days between consecutive orders. Ex: 5
 
 ## Simulators
 
-The simulators are available as Jupyter notebooks in Google Collab:
+Jupyter notebooks to backtest the performance of the different combinations of indicators and strategies with its respective parameters:  
 
-- [Open Fear and Greed simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/fng_simulator.ipynb)
+- `simulators/compare_strategies.ipynb`: Run a backtest to compare the performance of all the indicators / strategies for a given set of parameters and dates.  
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raulonlab/crypto-band-indicators/blob/main/simulators/compare_strategies.ipynb)
 
-- [Open Rainbow simulator in Colab](https://colab.research.google.com/github/raultruco/cryptowatson-indicators/blob/main/simulators/rwa_simulator.ipynb)
+- `simulators/optimise_strategies.ipynb`: Run a backtest to optimise the performance of all the indicators / strategies by using different set of parameters.  
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/raulonlab/crypto-band-indicators/blob/main/simulators/optimise_strategies.ipynb)
 
-Change the value of these variables, at the top of the notebook, to customize the simulation. 
+The notebooks provide a `Variables` section to change the parameters of the simulation:
 
 ```
-strategy             = "weighted_dca"    # Select strategy between "weighted_dca" and "rebalance"
-ticker_symbol        = "BTCUSDT"      # currently only works with BTCUSDT
-start                = '01/03/2022'   # start date of the simulation. Ex: '01/08/2020' or None
-end                  = None           # end date of the simulation. Ex: '01/08/2020' or None
-initial_cash         = 10000.0        # initial broker cash. Default 10000 usd
-min_order_period     = 7              # Used in weighted_dca and rebalance strategies
-base_buy_amount      = 100            # Used in weighted_dca strategy
-weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # Used in weighted_dca strategy
-rebalance_percents   = [85, 65, 50, 15, 10]         # Used in rebalance strategy
+# Common variables
+# ticker_symbol       = "BTCUSDT"   # currently only works with BTCUSDT
+start               = '01/01/2021'  # start date of the simulation. Ex: '01/08/2020' or None
+end                 = '31/12/2021'  # end date of the simulation. Ex: '01/08/2020' or None
+initial_cash        = 10000.0       # initial broker cash. Default 10000 usd
+min_order_period    = 5             # Minimum period in days to place orders
+base_buy_amount     = 100           # Amount purchased in standard DCA
+
+# Specific for Fear and greed indicator
+fng_weighted_multipliers    = [1.5, 1.25, 1, 0.75, 0.5]  # buy amount multipliers (weighted) for each band
+fng_rebalance_percents      = [85, 65, 50, 15, 10]       # rebalance percentages of BTC / total for each band
+fng_indicator_params        = {}                         # specific parameters for FnG indicator
+
+# Specific for Rainbow indicator
+rainbow_weighted_multipliers    = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
+rainbow_rebalance_percents      = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+rainbow_indicator_params        = {}
+
+# Other options
+log_progress         = False
+plot_results         = False
 ```
