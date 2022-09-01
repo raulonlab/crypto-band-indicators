@@ -129,6 +129,7 @@ class FngBandIndicator(BandIndicatorBase):
         if self.data_column != self._default_column:
             axes.plot(plot_data.index, plot_data[self.data_column],
                     color='#333333', alpha=0.5, linewidth=1, label=self.data_column)
+            axes.legend()
 
         # yticks
         axes.set_yticks(self._band_thresholds)
@@ -136,8 +137,6 @@ class FngBandIndicator(BandIndicatorBase):
 
         # Grid
         axes.grid(axis = 'y', linestyle = '--', linewidth = 0.5)
-
-        axes.legend()
 
         return axes
 

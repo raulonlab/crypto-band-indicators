@@ -179,8 +179,6 @@ class RainbowBandIndicator(BandIndicatorBase):
         # Grid
         band_axis.grid(axis = 'y', linestyle = '--', linewidth = 0.5)
 
-        # axes.legend()
-
         return axes
     
     def __str__(self):
