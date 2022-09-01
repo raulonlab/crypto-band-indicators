@@ -34,7 +34,7 @@ build: mkinit
 
 ### Clean logs and resources
 clean:
-	rm -r ./logs/*
+#	rm -r ./logs/*
 	rm -rf ${VENV_NAME}
 
 # show help: Renders automatically categories (##) and targets (###). Regular comments (#) ignored
