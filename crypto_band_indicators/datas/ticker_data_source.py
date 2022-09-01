@@ -6,7 +6,7 @@ import pandas as pd
 import nasdaqdatalink
 from datetime import datetime, date, timedelta
 from .data_source_base import DataSourceBase
-from cryptowatson_indicators.utils import parse_any_date
+from crypto_band_indicators.utils import parse_any_date
 nasdaqdatalink.ApiConfig.verify_ssl = False
 from functools import lru_cache
 

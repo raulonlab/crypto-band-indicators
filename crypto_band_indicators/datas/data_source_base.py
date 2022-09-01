@@ -6,7 +6,7 @@ import numpy as np
 import pandas_ta as ta
 import backtrader as bt
 from datetime import datetime, date, timedelta
-from cryptowatson_indicators.utils import parse_any_date
+from crypto_band_indicators.utils import parse_any_date
 from functools import lru_cache
 from wrapt import synchronized
 

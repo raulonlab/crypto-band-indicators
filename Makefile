@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 .PHONY: clean build help
 
-VENV_NAME=venv_cryptowatson-indicators
+VENV_NAME=venv_crypto_band_indicators
 
 venv: venv/touchfile
 
@@ -25,8 +25,8 @@ test: venv
 
 ### autogenerate imports in __init__.py files. --noattrs --nomods --relative --recursive
 mkinit: venv
-	. ${VENV_NAME}/bin/activate; mkinit cryptowatson_indicators --nomods --relative --recursive  -w
-	. ${VENV_NAME}/bin/activate; mkinit cryptowatson_indicators -w
+	. ${VENV_NAME}/bin/activate; mkinit crypto_band_indicators --nomods --relative --recursive  -w
+	. ${VENV_NAME}/bin/activate; mkinit crypto_band_indicators -w
 
 ### activate environment, install requirements and build package
 build: mkinit

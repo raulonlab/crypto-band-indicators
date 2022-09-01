@@ -3,7 +3,7 @@ import backtrader as bt
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from cryptowatson_indicators import utils
+from crypto_band_indicators import utils
 
 
 class CryptoStrategy(bt.Strategy):

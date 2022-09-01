@@ -3,8 +3,8 @@ import backtrader as bt
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from cryptowatson_indicators import utils
-from cryptowatson_indicators.indicators import BandIndicatorBase
+from crypto_band_indicators import utils
+from crypto_band_indicators.indicators import BandIndicatorBase
 from .indicator_wrappers import BandIndicatorWrapper
 from .base_strategy import CryptoStrategy
 

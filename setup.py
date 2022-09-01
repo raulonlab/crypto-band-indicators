@@ -5,8 +5,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='cryptowatson-indicators',
-    packages=find_packages(include=['cryptowatson_indicators*']),
+    name='crypto-band-indicators',
+    packages=find_packages(include=['crypto_band_indicators*']),
     version='0.0.2',
     description='Python package to calculate crypto indicators and run trading simulations',
     author='Me',

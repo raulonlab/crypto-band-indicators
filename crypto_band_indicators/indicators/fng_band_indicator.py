@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from cryptowatson_indicators.datas import FngDataSource
-from cryptowatson_indicators import utils
+from crypto_band_indicators.datas import FngDataSource
+from crypto_band_indicators import utils
 from .band_indicator_base import BandIndicatorBase, BandDetails
 
 class FngBandIndicator(BandIndicatorBase):

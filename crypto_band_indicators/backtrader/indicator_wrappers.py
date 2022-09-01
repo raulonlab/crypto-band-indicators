@@ -1,5 +1,5 @@
 import backtrader as bt
-from cryptowatson_indicators.indicators import BandIndicatorBase
+from crypto_band_indicators.indicators import BandIndicatorBase
 
 
 def _get_ta_ma_config(kind, length): return {

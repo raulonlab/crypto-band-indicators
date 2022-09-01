@@ -1,12 +1,12 @@
 import pandas as pd
 import backtrader as bt
-from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
-from cryptowatson_indicators.datas import TickerDataSource
-from cryptowatson_indicators.indicators import FngBandIndicator, RainbowBandIndicator
+from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
+from crypto_band_indicators.datas import TickerDataSource
+from crypto_band_indicators.indicators import FngBandIndicator, RainbowBandIndicator
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 
-from cryptowatson_indicators.utils.utils import LogColors
+from crypto_band_indicators.utils.utils import LogColors
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
 from dotenv import load_dotenv

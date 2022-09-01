@@ -5,7 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.optimize import curve_fit
-from cryptowatson_indicators.datas import TickerDataSource
+from crypto_band_indicators.datas import TickerDataSource
 from .band_indicator_base import BandIndicatorBase, BandDetails
 from ..utils import utils
 

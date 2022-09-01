@@ -1,8 +1,8 @@
 import backtrader as bt
-from cryptowatson_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
-from cryptowatson_indicators.datas import TickerDataSource
-from cryptowatson_indicators.indicators import RainbowBandIndicator
-from cryptowatson_indicators.utils.utils import LogColors
+from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
+from crypto_band_indicators.datas import TickerDataSource
+from crypto_band_indicators.indicators import RainbowBandIndicator
+from crypto_band_indicators.utils.utils import LogColors
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
 import matplotlib.pyplot as plt
