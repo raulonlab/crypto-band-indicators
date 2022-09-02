@@ -8,9 +8,9 @@ from datetime import datetime, date, timedelta
 from .data_source_base import DataSourceBase
 from crypto_band_indicators.utils import parse_any_date
 nasdaqdatalink.ApiConfig.verify_ssl = False
-from functools import lru_cache
+from functools import cache
 
-@lru_cache()
+@cache
 def _fetch_data_cached(start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
     print('TickerDataSource-->_fetch_data_cached!!!!!!!!!!!!!!!!!')
     start = parse_any_date(start, datetime(2010, 1, 1))
