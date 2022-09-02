@@ -8,9 +8,6 @@ pprint = pprint.PrettyPrinter(indent=2).pprint
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Global variables
 strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"

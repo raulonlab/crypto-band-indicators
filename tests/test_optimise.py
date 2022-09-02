@@ -1,17 +1,12 @@
-import pandas as pd
 import backtrader as bt
 from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
 from crypto_band_indicators.datas import TickerDataSource
 from crypto_band_indicators.indicators import FngBandIndicator, RainbowBandIndicator
+from crypto_band_indicators.utils.utils import LogColors
 from tabulate import tabulate
 import matplotlib.pyplot as plt
-
-from crypto_band_indicators.utils.utils import LogColors
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Fixed variables ################
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
