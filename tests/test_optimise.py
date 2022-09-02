@@ -24,19 +24,20 @@ fng_indicator_params={}
 rainbow_indicator_params={}
 
 # Range variables (to compare optimization)
-min_order_period_list = range(4, 8)              # Minimum period in days to place orders
+min_order_period_list = range(5, 6)              # Minimum period in days to place orders
 indicator_params_list = [None,
-                        {'ta_config': {'kind': 'sma', 'length': 4}},
+                        # {'ta_config': {'kind': 'sma', 'length': 4}},
                         {'ta_config': {'kind': 'wma', 'length': 3}},
                         ]
-ma_class_list = [bt.ind.WeightedMovingAverage, 
-                 bt.ind.MovingAverageSimple]     # smooth data with ma algorithm 
+ma_class_list = (None, ) 
+# ma_class_list = [bt.ind.WeightedMovingAverage, 
+#                  bt.ind.MovingAverageSimple]     # smooth data with ma algorithm 
 
 # Data sources
 ticker_data_source = TickerDataSource().load()
 
 def run(start, end, strategy_class, **kwargs):
-    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=0, runonce=True, exactbars=False)
+    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=1, runonce=True, exactbars=False)
     cerebro.broker.set_coc(True)
 
     # Add strategy

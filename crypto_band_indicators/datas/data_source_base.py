@@ -7,14 +7,7 @@ import pandas_ta as ta
 import backtrader as bt
 from datetime import datetime, date, timedelta
 from crypto_band_indicators.utils import parse_any_date
-from functools import lru_cache
 from wrapt import synchronized
-
-@lru_cache
-def _read_csv_cached(file_path) -> pd.DataFrame:
-    print('_read_csv_cached!!!!!!!!!!!!!!!!!')
-    return pd.read_csv(file_path, sep=';')
-
 
 def _get_ta_ma_strategy(configs):
     return ta.Strategy(
@@ -29,15 +22,15 @@ class DataSourceBase():
     text_columns = []
     ta_columns = []
 
-    def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):
+    def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None, disable_fetch: bool = None, disable_write_cache: bool = None):
         self.ticker_symbol = ticker_symbol
         self.binance_api_key = binance_api_key
         self.binance_secret_key = binance_secret_key
 
         self.dataframe = None
         self.ta_columns = []
-        self.disable_fetch = bool(os.environ.get('DISABLE_FETCH', False))
-        self.disable_write_cache = bool(os.environ.get('DISABLE_WRITE_CACHE', False))
+        self.disable_fetch = disable_fetch if disable_fetch is not None else bool(os.environ.get('DISABLE_FETCH', False))
+        self.disable_write_cache = disable_write_cache if disable_write_cache is not None else bool(os.environ.get('DISABLE_WRITE_CACHE', False))
 
 
     @synchronized
@@ -66,15 +59,17 @@ class DataSourceBase():
         # Validate data
         if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
             self.dataframe = None
-            return
+            error_message = f"{type(self).__name__}: Something went wrong loading the data"
+            print(f"WARNING: {error_message}")
+            return self
 
         # Concatenate data
         all_data = pd.concat([cached_data, missing_data])
 
-        if (all_data is None or all_data.empty):
+        if (all_data.empty):
             error_message = f"{type(self).__name__}: No data available"
             print(f"WARNING: {error_message}")
-            return
+            return self
 
         # Register data
         self.dataframe = all_data
@@ -91,22 +86,17 @@ class DataSourceBase():
     def fetch_data(self):
         pass
 
-    # @synchronized
     def write_cache(self) -> None:
         self._validate_dataframe()
 
-        # print('DataSourceBase.write_cache()!')
         local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
         local_index_column = self.index_column if self.index_column else 'date'
         self.dataframe.to_csv(local_cache_file_path, sep=';',
                               date_format='%Y-%m-%d', index=True, index_label=local_index_column)
 
-    # @synchronized
     def read_cache(self) -> Union[pd.DataFrame, None]:
-        # print('DataSourceBase.read_cache()!')
         local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
         cached_data = pd.read_csv(local_cache_file_path, sep=';')
-        # cached_data = _read_csv_cached(local_cache_file_path)
         
         if not isinstance(cached_data, pd.DataFrame) or cached_data.empty:
             return None

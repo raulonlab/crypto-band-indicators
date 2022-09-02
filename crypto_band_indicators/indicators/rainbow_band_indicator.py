@@ -29,7 +29,8 @@ class RainbowBandIndicator(BandIndicatorBase):
 
         # load indicator data if not passed
         if not isinstance(self.data, pd.DataFrame):
-            self.data = TickerDataSource().load().to_dataframe(start=indicator_start_date)
+            data_source = TickerDataSource().load()
+            self.data = data_source.to_dataframe(start=indicator_start_date)
 
         if not isinstance(self.data, pd.DataFrame) or self.data.empty:
             error_message = f"RainbowBandIndicator.__init__: No indicator data available"

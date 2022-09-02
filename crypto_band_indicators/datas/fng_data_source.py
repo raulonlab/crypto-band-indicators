@@ -8,8 +8,9 @@ from .data_source_base import DataSourceBase
 from crypto_band_indicators.utils import parse_any_date
 from functools import lru_cache
 
-@lru_cache
+@lru_cache()
 def _fetch_data_cached(start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
+    print('FngDataSource-->_fetch_data_cached!!!!!!!!!!!!!!!!!')
     start = parse_any_date(start, datetime(2010, 1, 1))
 
     if (start.date() >= date.today()):
@@ -60,6 +61,13 @@ class FngDataSource(DataSourceBase):
     index_column = 'date'
     numeric_columns = ['close']
     text_columns = ['close_name']
+
+    def __init__(self, *vargs, ** kvargs):
+        self.cache_file_path = 'fng_1d_alternative.csv'
+        self.index_column = 'date'
+        self.numeric_columns = ['close']
+        self.text_columns = ['close_name']
+        super().__init__(*vargs, ** kvargs)
 
     def fetch_data(self, *args, **kwargs) -> Union[pd.DataFrame, None]:
         return _fetch_data_cached(*args, **kwargs)
