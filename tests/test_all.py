@@ -2,12 +2,11 @@ import backtrader as bt
 from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
 from crypto_band_indicators.datas import TickerDataSource
 from crypto_band_indicators.indicators import FngBandIndicator, RainbowBandIndicator
-from crypto_band_indicators.utils.utils import LogColors
-import pprint
-pprint = pprint.PrettyPrinter(indent=2).pprint
+from crypto_band_indicators import utils
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
+
 
 # Global variables
 strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
@@ -96,13 +95,13 @@ def backtrader_test():
     strategy_results = cerebro_results[0]
     start_btc_price, end_btc_price = ticker_data_source.get_value_start_end(
         start=start, end=end)
-    pnl_color = f"{LogColors.FAIL}" if strategy_results.pnl_value < 0 else f"{LogColors.OK}"
+    pnl_color = f"{utils.LogColors.FAIL}" if strategy_results.pnl_value < 0 else f"{utils.LogColors.OK}"
 
     print(f"\nResults of {str(strategy_results)}")
     print("--------------------------------------------")
     print(f"{'Started:':<8} {strategy_results.start_value:>10.2f} USD (1 BTC = {start_btc_price:.2f} USD)")
     print(f"{'Ended:':<8} {strategy_results.end_value:>10.2f} USD (1 BTC = {end_btc_price:.2f} USD)")
-    print(f"{'PnL:':<8} {pnl_color}{strategy_results.pnl_value:>+10.2f} USD ({strategy_results.pnl_percent:+.2f}%){LogColors.ENDC}")
+    print(f"{'PnL:':<8} {pnl_color}{strategy_results.pnl_value:>+10.2f} USD ({strategy_results.pnl_percent:+.2f}%){utils.LogColors.ENDC}")
 
     if run_plot_backtrader_result_test:
         strategy_results.plot()

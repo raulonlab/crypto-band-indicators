@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.dates as mdates
-from crypto_band_indicators import utils
+from .. import utils
 from .base_strategy import CryptoStrategy
 
 

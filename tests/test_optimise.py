@@ -1,8 +1,8 @@
 import backtrader as bt
 from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy, DCAStrategy, HodlStrategy
-from crypto_band_indicators.datas import TickerDataSource
+from crypto_band_indicators.datas import TickerDataSource, FngDataSource
 from crypto_band_indicators.indicators import FngBandIndicator, RainbowBandIndicator
-from crypto_band_indicators.utils.utils import LogColors
+from crypto_band_indicators import utils, config
 from tabulate import tabulate
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
@@ -30,9 +30,13 @@ ma_class_list = (None, )
 
 # Data sources
 ticker_data_source = TickerDataSource().load()
+FngDataSource().load()
+# Configure for optimisation
+config.set('only_cache', True)
+config.set('disable_fetch', True)
 
 def run(start, end, strategy_class, **kwargs):
-    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=1, runonce=True, exactbars=False)
+    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=0, runonce=True, exactbars=False)
     cerebro.broker.set_coc(True)
 
     # Add strategy
@@ -127,21 +131,21 @@ def run_optimisation_between_dates(start, end):
     column_headers = ['Strategy', 'PNL USDT', 'PNL %', 'Parameters']
 
     sorted_rebalance_run_details = map(lambda strategy: strategy.describe(keys=column_keys), sorted_rebalance_run_results)
-    print(f"\n{LogColors.BOLD}Rebalance results:{LogColors.ENDC}")
+    print(f"\n{utils.LogColors.BOLD}Rebalance results:{utils.LogColors.ENDC}")
     print(tabulate([details.values() for details in sorted_rebalance_run_details], 
                     tablefmt="fancy_grid", 
                     headers=column_headers, 
                     floatfmt="+.2f"))
 
     sorted_wdca_run_details = map(lambda strategy: strategy.describe(keys=column_keys), sorted_wdca_run_results)
-    print(f"\n{LogColors.BOLD}Weighted DCA results:{LogColors.ENDC}")
+    print(f"\n{utils.LogColors.BOLD}Weighted DCA results:{utils.LogColors.ENDC}")
     print(tabulate([details.values() for details in sorted_wdca_run_details], 
                     tablefmt="fancy_grid", 
                     headers=column_headers, 
                     floatfmt="+.2f"))
     
     # Plot results
-    plot_results = True
+    plot_results = False
     plot_only_winner = True
 
     if plot_results:

@@ -1,17 +1,15 @@
 import os
 import backtrader as bt
 import pandas as pd
-import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from crypto_band_indicators import utils
-
+from .. import config, utils
 
 class CryptoStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
-        ma_class=None,          # Optional parameter to smooth ma to data
-        log=bool(os.environ.get('ENABLE_LOG', False)),              # Enable log messages
-        debug=bool(os.environ.get('ENABLE_DEBUG', False)),           # Enable debug messages
+        ma_class=None,                        # Optional parameter to smooth ma to data
+        log=config.get('enable_log', False),  # Enable log messages
+        debug=config.get('enable_debug', False),  # Enable debug messages
     )
 
     def __init__(self):

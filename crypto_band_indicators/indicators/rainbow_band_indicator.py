@@ -5,9 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from scipy.optimize import curve_fit
-from crypto_band_indicators.datas import TickerDataSource
+from ..datas import TickerDataSource
+from .. import utils
 from .band_indicator_base import BandIndicatorBase, BandDetails
-from ..utils import utils
 
 _FITTED_BAND_LOG_MULTIPLIER = .455
 

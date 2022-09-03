@@ -6,7 +6,7 @@ import numpy as np
 import pandas_ta as ta
 import backtrader as bt
 from datetime import datetime, date, timedelta
-from crypto_band_indicators.utils import parse_any_date
+from .. import utils, config
 from wrapt import synchronized
 
 def _get_ta_ma_strategy(configs):
@@ -20,24 +20,18 @@ class DataSourceBase():
     index_column = 'date'
     numeric_columns = []
     text_columns = []
-    ta_columns = []
-
-    def __init__(self, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None, disable_fetch: bool = None, disable_write_cache: bool = None):
+    
+    def __init__(self, ticker_symbol: str = 'BTCUSDT'):
         self.ticker_symbol = ticker_symbol
-        self.binance_api_key = binance_api_key
-        self.binance_secret_key = binance_secret_key
-
         self.dataframe = None
         self.ta_columns = []
-        self.disable_fetch = disable_fetch if disable_fetch is not None else bool(os.environ.get('DISABLE_FETCH', False))
-        self.disable_write_cache = disable_write_cache if disable_write_cache is not None else bool(os.environ.get('DISABLE_WRITE_CACHE', False))
-
 
     @synchronized
     def load(self) -> DataSourceBase:
         cached_data = None
         missing_data = None
         missing_start_date = None
+        errors = list()
 
         # Load cached csv data
         try:
@@ -48,28 +42,31 @@ class DataSourceBase():
             if last_date_cached:
                 missing_start_date = last_date_cached.date() + timedelta(days=1)
         except Exception as e:
-            print(
-                f"[warn] Error reading cache in: {self.__class__}: {str(e)}")
+            errors.append(f"Error reading cache: {str(e)}")
             cached_data = None
 
         # Fetch API data
-        if not self.disable_fetch:
-            missing_data = self.fetch_data(start=missing_start_date)
+        if not config.get('disable_fetch') and not (config.get('only_cache') and isinstance(cached_data, pd.DataFrame)):
+            print(f"{type(self).__name__}: Fetching... ")
+            try:
+                missing_data = self.fetch_data(start=missing_start_date)
+            except Exception as e:
+                errors.append(f"Error fetching data: {str(e)}")
+                missing_data = None
 
         # Validate data
         if not isinstance(cached_data, pd.DataFrame) and not isinstance(missing_data, pd.DataFrame):
             self.dataframe = None
-            error_message = f"{type(self).__name__}: Something went wrong loading the data"
-            print(f"WARNING: {error_message}")
-            return self
+            if len(errors) > 0:
+                raise Exception(f"{type(self).__name__}: {', '.join(errors)}")
+            else:
+                raise Exception(f"{type(self).__name__}: Something went wrong loading the data...")
 
         # Concatenate data
         all_data = pd.concat([cached_data, missing_data])
 
         if (all_data.empty):
-            error_message = f"{type(self).__name__}: No data available"
-            print(f"WARNING: {error_message}")
-            return self
+            raise Exception(f"{type(self).__name__}: No data available...")
 
         # Register data
         self.dataframe = all_data
@@ -77,8 +74,9 @@ class DataSourceBase():
         # Fill missing time series
         self.fill_the_gaps()
 
-        # Write cache (only if it's worth it)
-        if not self.disable_write_cache and (not isinstance(cached_data, pd.DataFrame) or cached_data.empty or cached_data.index.max() < all_data.index.max()):
+        # Write cache if there is something to write
+        if not isinstance(cached_data, pd.DataFrame) or all_data.index.max() > cached_data.index.max():
+            print(f"{type(self).__name__}: Writing cache... ")
             self.write_cache()
 
         return self
@@ -89,21 +87,21 @@ class DataSourceBase():
     def write_cache(self) -> None:
         self._validate_dataframe()
 
-        local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
-        local_index_column = self.index_column if self.index_column else 'date'
+        local_cache_file_path = self.__class__.cache_file_path if self.__class__.cache_file_path else f"{type(self).__name__}.csv"
+        local_index_column = self.__class__.index_column if self.__class__.index_column else 'date'
         self.dataframe.to_csv(local_cache_file_path, sep=';',
                               date_format='%Y-%m-%d', index=True, index_label=local_index_column)
 
     def read_cache(self) -> Union[pd.DataFrame, None]:
-        local_cache_file_path = self.cache_file_path if self.cache_file_path else f"{type(self).__name__}.csv"
+        local_cache_file_path = self.__class__.cache_file_path if self.__class__.cache_file_path else f"{type(self).__name__}.csv"
         cached_data = pd.read_csv(local_cache_file_path, sep=';')
         
         if not isinstance(cached_data, pd.DataFrame) or cached_data.empty:
             return None
 
-        local_index_column = self.index_column if self.index_column else 'date'
-        local_numeric_columns = self.numeric_columns if isinstance(
-            self.numeric_columns, list) else list()
+        local_index_column = self.__class__.index_column if self.__class__.index_column else 'date'
+        local_numeric_columns = self.__class__.numeric_columns if isinstance(
+            self.__class__.numeric_columns, list) else list()
 
         # Convert column types and discard invalid data
         cached_data[local_index_column] = pd.to_datetime(
@@ -125,8 +123,8 @@ class DataSourceBase():
         self._validate_dataframe()
 
         # Filter by dates
-        start = parse_any_date(start)
-        end = parse_any_date(end)
+        start = utils.parse_any_date(start)
+        end = utils.parse_any_date(end)
         return self.get_filtered_by_dates(start, end)
 
     def to_backtrade_feed(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> bt.feeds.PandasData:
@@ -195,12 +193,12 @@ class DataSourceBase():
         self._validate_dataframe()
 
         # Get start index
-        start_index = parse_any_date(start)
+        start_index = utils.parse_any_date(start)
         if not start_index:
             start_index = self.dataframe.index.min()
 
         # Get end index
-        end_index = parse_any_date(end)
+        end_index = utils.parse_any_date(end)
         if not end_index:
             end_index = self.dataframe.index.max()
 
@@ -232,8 +230,8 @@ class DataSourceBase():
         max = max1 if max1 > max2 else max2
 
         # Cut range between start_date and end_date:
-        start_date = parse_any_date(start_date, None)
-        end_date = parse_any_date(end_date, None)
+        start_date = utils.parse_any_date(start_date, None)
+        end_date = utils.parse_any_date(end_date, None)
         if start_date is not None:
             min = start_date if start_date > min else min
         if end_date is not None:

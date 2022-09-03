@@ -6,51 +6,8 @@ import pandas as pd
 import nasdaqdatalink
 from datetime import datetime, date, timedelta
 from .data_source_base import DataSourceBase
-from crypto_band_indicators.utils import parse_any_date
+from ..utils import parse_any_date
 nasdaqdatalink.ApiConfig.verify_ssl = False
-from functools import cache
-
-@cache
-def _fetch_data_cached(start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
-    print('TickerDataSource-->_fetch_data_cached!!!!!!!!!!!!!!!!!')
-    start = parse_any_date(start, datetime(2010, 1, 1))
-
-    if (start.date() >= date.today()):
-        return None
-
-    data = None
-
-    try:
-        if (start):
-            nasdaq_response = nasdaqdatalink.get(
-                "BCHAIN/MKPRU", start_date=start)
-        else:
-            nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU")
-
-        data = pd.DataFrame(nasdaq_response)
-
-        if not isinstance(data, pd.DataFrame) or data.empty:
-            return None
-
-        data = data.rename(columns={'Value': 'close'})
-        data.index.name = 'date'
-        # data['date'] = pd.to_datetime(data['date'], format='%Y-%m-%d')
-
-        # Convert column types and discard invalid data
-        data['close'] = pd.to_numeric(
-            data['close'], errors='coerce')
-        # Drop 0 or np values
-        data = data[data["close"] > 0]
-
-        # Remove rows already cached (duplicates)
-        if (start):
-            data = data[~(data.index < pd.to_datetime(start))]
-
-        return data
-
-    except Exception as e:
-        print(f"Error fetching and parsing nasdaq data... {format_exc()}")
-        return
 
 
 class TickerDataSource(DataSourceBase):
@@ -58,15 +15,46 @@ class TickerDataSource(DataSourceBase):
     index_column = 'date'
     numeric_columns = ['close']
     text_columns = []
-    def __init__(self, *vargs, ** kvargs):
-        self.cache_file_path = 'btcusdt_1d_nasdaq.csv'
-        self.index_column = 'date'
-        self.numeric_columns = ['close']
-        self.text_columns = []
-        super().__init__(*vargs, ** kvargs)
 
-    def fetch_data(self, *args, **kwargs) -> Union[pd.DataFrame, None]:
-        return _fetch_data_cached(*args, **kwargs)
+    def fetch_data(self, start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
+        start = parse_any_date(start, datetime(2010, 1, 1))
+
+        if (start.date() >= date.today()):
+            return None
+
+        data = None
+
+        try:
+            if (start):
+                nasdaq_response = nasdaqdatalink.get(
+                    "BCHAIN/MKPRU", start_date=start)
+            else:
+                nasdaq_response = nasdaqdatalink.get("BCHAIN/MKPRU")
+
+            data = pd.DataFrame(nasdaq_response)
+
+            if not isinstance(data, pd.DataFrame) or data.empty:
+                return None
+
+            data = data.rename(columns={'Value': 'close'})
+            data.index.name = 'date'
+            # data['date'] = pd.to_datetime(data['date'], format='%Y-%m-%d')
+
+            # Convert column types and discard invalid data
+            data['close'] = pd.to_numeric(
+                data['close'], errors='coerce')
+            # Drop 0 or np values
+            data = data[data["close"] > 0]
+
+            # Remove rows already cached (duplicates)
+            if (start):
+                data = data[~(data.index < pd.to_datetime(start))]
+
+            return data
+
+        except Exception as e:
+            print(f"Error fetching and parsing nasdaq data... {format_exc()}")
+            return
         
     @classmethod
     def get_binance_ticker_market_price(cls, ticker_symbol: str = 'BTCUSDT', binance_api_key: str = None, binance_secret_key: str = None):

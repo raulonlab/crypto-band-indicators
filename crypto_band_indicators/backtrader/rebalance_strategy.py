@@ -3,8 +3,8 @@ import backtrader as bt
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from crypto_band_indicators import utils
-from crypto_band_indicators.indicators import BandIndicatorBase
+from ..utils import LogColors, Emojis, PlotColors
+from ..indicators import BandIndicatorBase
 from .indicator_wrappers import BandIndicatorWrapper
 from .base_strategy import CryptoStrategy
 
@@ -54,7 +54,7 @@ class RebalanceStrategy(CryptoStrategy):
     #     indicator_index = int(self.indicator[0])
 
     #     self.log(
-    #         f"R REBALANCE (FIRST). Indicator index: {indicator_index}, rebalance percent: {self.params.rebalance_percents[indicator_index]}", log_color=utils.LogColors.BOLDSTRATEGY)
+    #         f"R REBALANCE (FIRST). Indicator index: {indicator_index}, rebalance percent: {self.params.rebalance_percents[indicator_index]}", log_color=LogColors.BOLDSTRATEGY)
     #     self.rebalance(self.params.rebalance_percents[indicator_index])
 
     def next(self):
@@ -75,7 +75,7 @@ class RebalanceStrategy(CryptoStrategy):
         
         if indicator_index != last_executed_indicator_index:
             self.log(
-                f"R REBALANCE. Current index: {indicator_index}, Previous: {last_executed_indicator_index}", log_color=utils.LogColors.BOLDSTRATEGY)
+                f"R REBALANCE. Current index: {indicator_index}, Previous: {last_executed_indicator_index}", log_color=LogColors.BOLDSTRATEGY)
             self.rebalance(
                 self.params.rebalance_percents[indicator_index])
         else:
@@ -113,11 +113,11 @@ class RebalanceStrategy(CryptoStrategy):
         # Do nothing if rebalance value is the same than current value
         if int(rebalance_position_value) == int(current_position_value):
             self.log(
-                f"  REBALANCE SKIPPED: already rebalanced at {percent}%", log_color=utils.LogColors.STRATEGY)
+                f"  REBALANCE SKIPPED: already rebalanced at {percent}%", log_color=LogColors.STRATEGY)
         # Buy, if ma goes up
         elif rebalance_position_value > current_position_value and current_price > previous_price:  # and (last_executed_btc_price is None or current_btc_price < last_executed_btc_price):  # and self.ma[0] > self.ma[-1]:
             self.log(
-                f"{utils.Emojis.BUY} BUY {order_btc_size:.6f} BTC = {order_dol_size:.2f} USD, 1 BTC = {current_btc_price:.2f} USD", log_color=utils.LogColors.BOLDBUY)
+                f"{Emojis.BUY} BUY {order_btc_size:.6f} BTC = {order_dol_size:.2f} USD, 1 BTC = {current_btc_price:.2f} USD", log_color=LogColors.BOLDBUY)
             # Keep track of the created order to avoid a 2nd order
             self.order = self.buy(size=abs(order_btc_size),
                                   rebalance_percent=percent)
@@ -126,7 +126,7 @@ class RebalanceStrategy(CryptoStrategy):
         # Sell, if ma goes down
         elif rebalance_position_value < current_position_value and current_price < previous_price:  # (last_executed_btc_price is None or current_btc_price > last_executed_btc_price):    # self.ma[0] < self.ma[-1]:
             self.log(
-                f"{utils.Emojis.SELL} SELL {order_btc_size:.6f} BTC = {order_dol_size:.2f} USD, 1 BTC = {current_btc_price:.2f} USD", log_color=utils.LogColors.BOLDSELL)
+                f"{Emojis.SELL} SELL {order_btc_size:.6f} BTC = {order_dol_size:.2f} USD, 1 BTC = {current_btc_price:.2f} USD", log_color=LogColors.BOLDSELL)
             # Keep track of the created order to avoid a 2nd order
             self.order = self.sell(size=order_btc_size,
                                    rebalance_percent=percent)
@@ -223,9 +223,9 @@ class RebalanceStrategy(CryptoStrategy):
 
         # Plot rebalance steps
         axes.fill_between(steps_data_x, steps_data_y,
-                          color=utils.PlotColors.GOLD, step="post", alpha=0.4, label='% BTC / Total')
+                          color=PlotColors.GOLD, step="post", alpha=0.4, label='% BTC / Total')
         axes.step(steps_data_x, steps_data_y,
-                  color=utils.PlotColors.GOLD, where='post')
+                  color=PlotColors.GOLD, where='post')
 
         axes.set(ylim=(0, 100),
                  yticks=self.params.rebalance_percents)

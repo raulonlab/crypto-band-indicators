@@ -2,7 +2,7 @@ import backtrader as bt
 from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStrategy
 from crypto_band_indicators.datas import TickerDataSource
 from crypto_band_indicators.indicators import RainbowBandIndicator
-from crypto_band_indicators.utils.utils import LogColors
+from crypto_band_indicators import utils
 import pprint
 pprint = pprint.PrettyPrinter(indent=2).pprint
 import matplotlib.pyplot as plt
@@ -107,13 +107,13 @@ def backtrader_test():
 
     pnl_value = end_portfolio_value - start_portfolio_value
     pnl_percent = (pnl_value / start_portfolio_value) * 100
-    pnl_color = f"{LogColors.FAIL}" if end_portfolio_value < start_portfolio_value else f"{LogColors.OK}"
+    pnl_color = f"{utils.LogColors.FAIL}" if end_portfolio_value < start_portfolio_value else f"{utils.LogColors.OK}"
 
     print(f"\nResults of {str(cerebro_results[0])}")
     print("--------------------------------------------")
     print(f"{'Started:':<8} {start_portfolio_value:>10.2f} USD (1 BTC = {start_btc_price:.2f} USD)")
     print(f"{'Ended:':<8} {end_portfolio_value:>10.2f} USD ({end_position.size:6f} BTC + {end_cash:.2f} USD in cash | 1 BTC = {end_btc_price:.2f} USD)")
-    print(f"{'PnL:':<8} {pnl_color}{pnl_value:>10.2f} USD ({pnl_percent:.2f}%){LogColors.ENDC}")
+    print(f"{'PnL:':<8} {pnl_color}{pnl_value:>10.2f} USD ({pnl_percent:.2f}%){utils.LogColors.ENDC}")
 
     if run_plot_backtrader_result_test:
         cerebro_results[0].plot()

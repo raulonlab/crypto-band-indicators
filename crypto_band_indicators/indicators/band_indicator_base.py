@@ -1,7 +1,6 @@
 from typing import Union
 import pandas as pd
 
-
 class BandDetails:
     band_index=0
     band_ordinal=''

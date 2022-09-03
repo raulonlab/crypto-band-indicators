@@ -3,8 +3,8 @@ import backtrader as bt
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from crypto_band_indicators import utils
-from crypto_band_indicators.indicators import BandIndicatorBase
+from ..utils import LogColors, Emojis, PlotColors
+from ..indicators import BandIndicatorBase
 from .indicator_wrappers import BandIndicatorWrapper
 from .base_strategy import CryptoStrategy
 
@@ -64,7 +64,7 @@ class WeightedDCAStrategy(CryptoStrategy):
             self.params.weighted_multipliers[indicator_index]
         buy_btc_size = buy_dol_size / self.price[0]
         self.log(
-            f"{utils.Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Current index: {indicator_index}, 1 BTC = {self.price[0]:.2f} USD", log_color=utils.LogColors.BOLDBUY)
+            f"{Emojis.BUY} BUY {buy_btc_size:.6f} BTC = {buy_dol_size:.2f} USD, Current index: {indicator_index}, 1 BTC = {self.price[0]:.2f} USD", log_color=LogColors.BOLDBUY)
         
         # Keep track of the created order to avoid a 2nd order
         self.order = self.buy(
@@ -153,9 +153,9 @@ class WeightedDCAStrategy(CryptoStrategy):
 
         # Plot rebalance steps
         axes.fill_between(steps_data_x, steps_data_y,
-                          color=utils.PlotColors.GOLD, step="post", alpha=0.4, label='Weighted multiplier')
+                          color=PlotColors.GOLD, step="post", alpha=0.4, label='Weighted multiplier')
         axes.step(steps_data_x, steps_data_y,
-                  color=utils.PlotColors.GOLD, where='post')
+                  color=PlotColors.GOLD, where='post')
 
         axes.set(ylim=(0, max(steps_data_y)),
                  yticks=self.params.weighted_multipliers)
