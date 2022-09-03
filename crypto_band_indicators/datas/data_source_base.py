@@ -9,6 +9,18 @@ from datetime import datetime, date, timedelta
 from .. import utils, config
 from wrapt import synchronized
 
+class PandasDataFactory():
+    @classmethod
+    def create_feed(cls, lines, **kvargs):
+        class_extensions = dict(
+            lines=tuple(lines),
+            params=tuple([(line, None) for line in lines]),
+            # datafields=datafields,
+        )
+
+        extended_class = type('custom_pandas_data', (bt.feeds.PandasData,), class_extensions)
+        return extended_class(**kvargs)
+
 def _get_ta_ma_strategy(configs):
     return ta.Strategy(
         name="ta_ma_strategy",
@@ -47,7 +59,7 @@ class DataSourceBase():
 
         # Fetch API data
         if not config.get('disable_fetch') and not (config.get('only_cache') and isinstance(cached_data, pd.DataFrame)):
-            print(f"{type(self).__name__}: Fetching... ")
+            # print(f"{type(self).__name__}: Fetching... ")
             try:
                 missing_data = self.fetch_data(start=missing_start_date)
             except Exception as e:
@@ -76,7 +88,7 @@ class DataSourceBase():
 
         # Write cache if there is something to write
         if not isinstance(cached_data, pd.DataFrame) or all_data.index.max() > cached_data.index.max():
-            print(f"{type(self).__name__}: Writing cache... ")
+            # print(f"{type(self).__name__}: Writing cache... ")
             self.write_cache()
 
         return self
@@ -130,20 +142,36 @@ class DataSourceBase():
     def to_backtrade_feed(self, start: Union[str, date, datetime, None] = None, end: Union[str, date, datetime, None] = None) -> bt.feeds.PandasData:
         local_dataframe = self.to_dataframe(start, end)
 
-        return bt.feeds.PandasData(
-            dataname=local_dataframe,
+        close_column_index = list(local_dataframe.columns).index("close")
+                
+        feed_parameters = {
+            'dataname': local_dataframe,
             # datetime=list(ticker_data.columns).index("Date"),
-            high=None,
-            low=None,
-            open=list(local_dataframe.columns).index("close"),
-            close=list(local_dataframe.columns).index("close"),
-            volume=None,
-            openinterest=None,
-        )
+            'high': None,
+            'low': None,
+            'open': close_column_index,
+            'close': close_column_index,
+            'volume': None,
+            'openinterest': None,
+        }
+
+        # Check MA columns
+        if self.ta_columns is not None and len(self.ta_columns) > 0:
+            # params = dict()
+            for ta_column in self.ta_columns:
+                ta_column_index = list(local_dataframe.columns).index(ta_column)
+                feed_parameters[ta_column] = ta_column_index
+            
+            return PandasDataFactory.create_feed(lines=self.ta_columns, **feed_parameters)
+
+        return bt.feeds.PandasData(**feed_parameters)
 
     @synchronized
-    def append_ta_columns(self, ta_configs: Union[List(Dict), Dict], **kwargs) -> DataSourceBase:
+    def append_ta_columns(self, ta_configs: Union[List(Dict), Dict, None] = None, **kwargs) -> DataSourceBase:
         self._validate_dataframe()
+
+        if ta_configs is None:
+            return self
 
         if not isinstance(ta_configs, list):
             ta_configs = [ta_configs]

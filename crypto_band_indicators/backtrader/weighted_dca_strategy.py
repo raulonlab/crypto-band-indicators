@@ -12,7 +12,7 @@ class WeightedDCAStrategy(CryptoStrategy):
     # list of parameters which are configurable for the strategy
     params = dict(
         indicator_class=None,
-        indicator_params={},
+        indicator_ta_config={},
         base_buy_amount=100,   # amount base to buy, to be multiplied by weighted multiplier
         min_order_period=7,        # number of days between buys
         weighted_multipliers=[1],  # multiplier to apply depending on indicator index
@@ -24,9 +24,9 @@ class WeightedDCAStrategy(CryptoStrategy):
         if not issubclass(self.params.indicator_class, BandIndicatorBase):
             raise Exception('WeightedDCAStrategy.__init__: parameter indicator_class must be a subclass of BandIndicatorBase')
 
-        # Create indicator dinamically with indicator_class and indicator_params
-        if self.params.indicator_params is None: self.params.indicator_params = {}
-        self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(**self.params.indicator_params))
+        # Create indicator dinamically with indicator_class and indicator_ta_config
+        if self.params.indicator_ta_config is None: self.params.indicator_ta_config = {}
+        self.indicator = BandIndicatorWrapper(band_indicator=self.params.indicator_class(ta_config=self.params.indicator_ta_config))
 
         self.price = self.data.close
 
@@ -37,9 +37,10 @@ class WeightedDCAStrategy(CryptoStrategy):
         self_dict = super().describe()
         self_dict['min_order_period'] = self.params.min_order_period
         self_dict['base_buy_amount'] = self.params.base_buy_amount
-        self_dict['weighted_multipliers'] = ','.join([str(multiplier) for multiplier in self.params.weighted_multipliers])
-        self_dict['ma_class'] = None if self.params.ma_class is None else ''.join([char for char in self.params.ma_class.__name__ if char.isupper()])
-        self_dict['params'] = f"{self_dict['min_order_period']} days |{self_dict['base_buy_amount']}$ |{self_dict['weighted_multipliers']}"
+        weighted_multipliers_string = ','.join([str(multiplier) for multiplier in self.params.weighted_multipliers])
+        self_dict['weighted_multipliers'] = f"[{weighted_multipliers_string}]"
+        self_dict['ta_column'] = '' if self.params.ta_column is None else self.params.ta_column
+        self_dict['params'] = f"{self_dict['min_order_period']}, {self_dict['base_buy_amount']}$, {self_dict['weighted_multipliers']}, {self_dict['ta_column']}"
 
         if keys is not None:
             self_dict = {key: self_dict[key] for key in keys}
@@ -70,15 +71,20 @@ class WeightedDCAStrategy(CryptoStrategy):
         self.order = self.buy(
             size=buy_btc_size, weighted_multiplier=self.params.weighted_multipliers[indicator_index])
 
-    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = ''):
+    def plot(self, show: bool = True, title_prefix: str = '', title_suffix: str = '', show_params: bool = True):
         ticker_data = self.data._dataname
 
         gs_kw = dict(height_ratios=[2, 1, 1])
         fig, (ticker_axes, strategy_axes, indicator_axes) = plt.subplots(
-            nrows=3, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))    # constrained_layout=True, figsize=(11, 7)
+            nrows=3, sharex=True, gridspec_kw=gs_kw, subplot_kw=dict(frameon=True))
+        fig.subplots_adjust(hspace=0.1, wspace=0.1, top=0.9)
+
+        # Titles
         fig.suptitle(f"{title_prefix}{str(self)}{title_suffix}", fontsize='large')
-        # fig.set_tight_layout(True)
-        fig.subplots_adjust(hspace=0.1, wspace=0.1)
+        if show_params:
+            self_details = self.describe()
+            params_str = f"min_order_period: {self_details.get('min_order_period')}, base_buy_amount: {self_details.get('base_buy_amount')}, weighted_multipliers: {self_details.get('weighted_multipliers')}"
+            ticker_axes.set_title(params_str, fontsize='small', va="center", y=1.05)  # xycoords='axes fraction',
 
         plt.xticks(fontsize='x-small', rotation=45, ha='right')
         # plt.yticks(fontsize='x-small')
@@ -106,7 +112,7 @@ class WeightedDCAStrategy(CryptoStrategy):
         # self.plot_axes_orders(ticker_axes)
 
         # Strategy chart #########
-        self.plot_axes(strategy_axes, show_params=True)
+        self.plot_axes(strategy_axes)
 
         # Fng indicator chart ########
         self.indicator.plot_axes(indicator_axes, start = ticker_data.index.min(), end = ticker_data.index.max())
@@ -137,9 +143,9 @@ class WeightedDCAStrategy(CryptoStrategy):
 
         return fig
 
-    def plot_axes(self, axes, show_legend=True, show_params=True):
+    def plot_axes(self, axes, show_legend=True):
         # axes.margins(x=0)
-        axes.set_ylabel('Weighted Average', fontsize='medium')
+        axes.set_ylabel('Multipliers', fontsize='medium')
 
         steps_data_x = list()
         steps_data_y = list()
@@ -163,14 +169,5 @@ class WeightedDCAStrategy(CryptoStrategy):
 
         if show_legend:
             axes.legend()
-
-        if show_params:
-            params_str = f"min_order_period: {self.params.min_order_period}, base_buy_amount: {self.params.base_buy_amount}, weighted_multipliers: {self.params.weighted_multipliers}"
-            axes.annotate(params_str,
-                          xy=(1.0, -0.2),
-                          xycoords='axes fraction',
-                          ha='right',
-                          va="center",
-                          fontsize='small')
 
         return axes

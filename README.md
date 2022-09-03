@@ -58,7 +58,7 @@ The Rainbow Chart is divided in 9 bands ordered from worst (expensive) to best (
 
 ### Rebalance 
 
-Applies a rebalance percentage of the position between BTC and USDT depending on the indicator band. The better band index, the more percentage of BTC against USDT is kept in the wallet over the total value in USDT.
+Applies a rebalance of the position of BTC over the total value depending on the indicator band. The better band index, the more percentage of BTC against USDT is kept in the wallet over the total value in USDT.
 
 #### Parameters
 - **rebalance_percents**: Rebalance percentages of BTC over USDT for each band. Ex: [85, 65, 50, 15, 10]
@@ -66,7 +66,7 @@ Applies a rebalance percentage of the position between BTC and USDT depending on
 
 ### Weighted Averaging DCA
 
-Variation of the traditional Dollar Cost Average (DCA) method of investing that takes into account the current indicator index. The better index, the bigger the amount of BTC purchased.
+Variation of the traditional Dollar Cost Average (DCA) method of investing that takes into account the indicator band. The better index, the bigger the amount of BTC purchased.
 
 The idea of applying this strategy with the Rainbow index comes from [this post in Reddit by the user u/pseudoHappyHippy](https://www.reddit.com/r/CryptoCurrency/comments/qg9s6v/introducing_rainbowweighted_averaging_a_more/). The author claims that RWA (Rainbow Weighted Averaging) outperforms DCA 96.8% of the time by an average of 35.3% greater returns when applied to historical BTC price data.
 
@@ -100,12 +100,10 @@ base_buy_amount     = 100           # Amount purchased in standard DCA
 # Specific for Fear and greed indicator
 fng_weighted_multipliers    = [1.5, 1.25, 1, 0.75, 0.5]  # buy amount multipliers (weighted) for each band
 fng_rebalance_percents      = [85, 65, 50, 15, 10]       # rebalance percentages of BTC / total for each band
-fng_indicator_params        = {}                         # specific parameters for FnG indicator
 
 # Specific for Rainbow indicator
 rainbow_weighted_multipliers    = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
 rainbow_rebalance_percents      = [10, 20, 30, 40, 50, 60, 70, 80, 90]
-rainbow_indicator_params        = {}
 
 # Other options
 log_progress         = False

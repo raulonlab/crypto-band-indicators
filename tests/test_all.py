@@ -17,11 +17,11 @@ end = '31/07/2021'
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period = 7              # Minimum period in days to place orders
 base_buy_amount = 100            # Amount purchased in standard DCA
-ma_class = None
-ma_class = bt.ind.WeightedMovingAverage
-# ma_class = bt.ind.MovingAverageSimple
-indicator_params = None
-indicator_params =  {'ta_config': {'kind': 'sma', 'length': 3}}
+ticker_ta_config = None
+ticker_ta_config = {'kind': 'sma', 'length': 3}
+ 
+indicator_ta_config = None
+indicator_ta_config = {'kind': 'sma', 'length': 3}
 
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rainbow_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
@@ -39,6 +39,10 @@ run_plot_backtrader_result_test = True
 
 # Ticker data source
 ticker_data_source = TickerDataSource().load()
+ta_column = None
+if ticker_ta_config is not None:
+    ticker_data_source.append_ta_columns(ticker_ta_config)
+    ta_column = ticker_data_source.get_ta_columns()[0]
 
 def backtrader_test():
     cerebro = bt.Cerebro(stdstats=True, runonce=True)
@@ -51,7 +55,7 @@ def backtrader_test():
         weighted_multipliers = fng_weighted_multipliers if indicator == "fng" else rainbow_weighted_multipliers
         cerebro.addstrategy(WeightedDCAStrategy, 
                             indicator_class=indicator_class,
-                            indicator_params=indicator_params,
+                            indicator_ta_config=indicator_ta_config,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -61,10 +65,10 @@ def backtrader_test():
         rebalance_percents = fng_rebalance_percents if indicator == "fng" else rainbow_rebalance_percents
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=indicator_class,
-                            indicator_params=indicator_params,
+                            indicator_ta_config=indicator_ta_config,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
-                            ma_class=ma_class, 
+                            ta_column=ta_column, 
                             log=log, 
                             debug=debug)
     elif strategy == "dca":

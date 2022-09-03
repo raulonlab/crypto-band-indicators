@@ -33,7 +33,7 @@ from crypto_band_indicators.backtrader import (BandIndicatorWrapper,
                                                HodlStrategy, RebalanceStrategy,
                                                WeightedDCAStrategy,)
 from crypto_band_indicators.datas import (DataSourceBase, FngDataSource,
-                                          TickerDataSource,)
+                                          PandasDataFactory, TickerDataSource,)
 from crypto_band_indicators.indicators import (BandDetails, BandIndicatorBase,
                                                FngBandIndicator,
                                                RainbowBandIndicator,)
@@ -41,7 +41,7 @@ from crypto_band_indicators.indicators import (BandDetails, BandIndicatorBase,
 __all__ = ['BandDetails', 'BandIndicatorBase', 'BandIndicatorWrapper',
            'CheatOnOpenCryptoStrategy', 'CryptoStrategy', 'DCAStrategy',
            'DataSourceBase', 'FngBandIndicator', 'FngDataSource',
-           'HodlStrategy', 'RainbowBandIndicator', 'RebalanceStrategy',
-           'TickerDataSource', 'WeightedDCAStrategy', 'backtrader', 'config',
-           'datas', 'indicators', 'utils']
+           'HodlStrategy', 'PandasDataFactory', 'RainbowBandIndicator',
+           'RebalanceStrategy', 'TickerDataSource', 'WeightedDCAStrategy',
+           'backtrader', 'config', 'datas', 'indicators', 'utils']
 # </AUTOGEN_INIT>

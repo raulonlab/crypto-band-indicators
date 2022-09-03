@@ -19,9 +19,7 @@ base_buy_amount = 100            # Amount purchased in standard DCA
 # weighted_multipliers = [0, 0.1, 0.2, 0.35, 0.5, 0.75, 1, 2.5, 3]      # Default order amount multipliers (weighted) for each index
 weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]    # Fibonacci order amount multipliers (weighted) for each index
 rebalance_percents = [10, 20, 30, 40, 50, 60, 70, 80, 90]   # rebalance percentages for each index
-ma_class = None
-# ma_class = bt.ind.WeightedMovingAverage
-# ma_class = bt.ind.MovingAverageSimple
+ta_column = None
 
 # logging
 log = True
@@ -67,7 +65,7 @@ def backtrader_test():
     if strategy == "weighted_dca":
         cerebro.addstrategy(WeightedDCAStrategy, 
                             indicator_class=RainbowBandIndicator,
-                            ma_class=ma_class,
+                            ta_column=ta_column,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -76,7 +74,7 @@ def backtrader_test():
     elif strategy == "rebalance":
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=RainbowBandIndicator,
-                            ma_class=ma_class,
+                            ta_column=ta_column,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             log=log, 

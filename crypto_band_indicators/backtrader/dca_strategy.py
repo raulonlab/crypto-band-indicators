@@ -26,7 +26,7 @@ class DCAStrategy(CryptoStrategy):
         self_dict['min_order_period'] = self.params.min_order_period
         self_dict['buy_amount'] = self.params.buy_amount
         self_dict['multiplier'] = self.params.multiplier
-        self_dict['params'] = f"{self_dict['min_order_period']} days |{self_dict['buy_amount']}$ |x{self_dict['multiplier']}"
+        self_dict['params'] = f"{self_dict['min_order_period']}, {self_dict['buy_amount']}$, x{self_dict['multiplier']}"
 
         if keys is not None:
             self_dict = {key: self_dict[key] for key in keys}

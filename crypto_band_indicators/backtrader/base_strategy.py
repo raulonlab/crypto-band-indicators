@@ -7,7 +7,7 @@ from .. import config, utils
 class CryptoStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
-        ma_class=None,                        # Optional parameter to smooth ma to data
+        ta_column=None,                        # Optional data column with ma data
         log=config.get('enable_log', False),  # Enable log messages
         debug=config.get('enable_debug', False),  # Enable debug messages
     )
@@ -38,7 +38,6 @@ class CryptoStrategy(bt.Strategy):
         self.pnl_percent = (self.pnl_value / self.start_value) * 100
         self.roi = (self.end_value / self.start_value) - 1.0
         # print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        # print('CryptoStrategy:stop():str(self): ', str(self))
     
     def describe(self, keys = None):
         self_dict = {'name': str(self), 'start_value': self.start_value, 'end_value': self.end_value, 'pnl_value': self.pnl_value, 'pnl_percent': self.pnl_percent }
@@ -158,7 +157,7 @@ class CryptoStrategy(bt.Strategy):
         # buy_sell_xaxis.tick_params(axis='x', labelrotation=45, direction='out', labelsize='x-small')
         buy_sell_xaxis.set(xlim=axes.get_xlim(), xticks=order_data.index.to_list())
         for label in buy_sell_xaxis.get_xticklabels(which='major'):
-            label.set(rotation=45, horizontalalignment='left', fontsize='small')
+            label.set(rotation=45, horizontalalignment='left', fontsize='x-small')
 
         for order_date in buy_order_data.index.to_list():
           axes.axvline(order_date, color='green', linestyle = '--', linewidth = 0.5)  # alpha=0.5
