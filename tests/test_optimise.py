@@ -36,7 +36,7 @@ config.set('only_cache', True)
 config.set('disable_fetch', True)
 
 def run(start, end, strategy_class, **kwargs):
-    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=0, runonce=True, exactbars=False)
+    cerebro = bt.Cerebro(stdstats=False, optreturn=False, maxcpus=1, runonce=True, exactbars=False)
     cerebro.broker.set_coc(True)
 
     # Add strategy
