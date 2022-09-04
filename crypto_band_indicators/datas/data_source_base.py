@@ -175,6 +175,11 @@ class DataSourceBase():
         if not isinstance(ta_configs, list):
             ta_configs = [ta_configs]
         
+        # Drop existing ta columns
+        if self.ta_columns is not None and len(self.ta_columns) > 0:
+            self.dataframe = self.dataframe.drop(columns=self.ta_columns)
+            self.ta_columns = list()
+        
         self.dataframe.ta.cores = 0     # Disable multiprocessing (conflicts with backtrader)
         self.dataframe.ta.strategy(_get_ta_ma_strategy(ta_configs), **kwargs)
 
