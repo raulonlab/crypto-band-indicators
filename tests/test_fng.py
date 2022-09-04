@@ -21,8 +21,8 @@ rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each ind
 ta_column = None
 
 # logging
-log = True
-debug = False
+backtrader_log = True
+backtrader_debug = False
 
 # Enable / diable parts to bo tested
 run_get_value_test = True
@@ -68,16 +68,16 @@ def backtrader_test():
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     elif strategy == "rebalance":
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=FngBandIndicator,
                             ta_column=ta_column,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"
         print(f"Error: {error_message}")

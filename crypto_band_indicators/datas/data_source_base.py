@@ -11,7 +11,6 @@ from wrapt import synchronized
 class PandasDataFactory():
     @classmethod
     def create_feed(cls, additional_lines, **kvargs):
-        print('PandasDataFactory.create_feed():additional_lines: ', additional_lines)
         # Default PandasData if no additional lines needed
         if additional_lines is None or len(additional_lines) == 0:
             return bt.feeds.PandasData(**kvargs)
@@ -23,7 +22,7 @@ class PandasDataFactory():
             params=tuple([(line, None) for line in additional_lines]),
         )
 
-        extended_class = type('extended_pandas_data', (bt.feeds.PandasData,), class_extensions)
+        extended_class = type('ExtendedPandasData', (bt.feeds.PandasData,), class_extensions)
         return extended_class(**kvargs)
 
 def _get_ta_ma_strategy(configs):
@@ -62,7 +61,7 @@ class DataSourceBase():
             cached_data = None
 
         # Fetch API data
-        if not config.get('disable_fetch') and not (config.get('only_cache') and isinstance(cached_data, pd.DataFrame)):
+        if not config.get(config.DISABLE_FETCH) and not (config.get(config.ONLY_CACHE) and isinstance(cached_data, pd.DataFrame)):
             try:
                 missing_data = self.fetch_data(start=missing_start_date)
             except Exception as e:

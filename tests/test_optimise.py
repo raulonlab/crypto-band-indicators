@@ -33,8 +33,8 @@ ticker_ta_config_list = [
 ticker_data_source = TickerDataSource().load()
 FngDataSource().load()
 # Configure for optimisation
-config.set('only_cache', True)
-config.set('disable_fetch', True)
+config.set(config.ONLY_CACHE, True)
+config.set(config.DISABLE_FETCH, True)
 
 if ticker_ta_config_list is not None:
     ta_column_list = list()

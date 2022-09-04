@@ -1,4 +1,3 @@
-import os
 import backtrader as bt
 import pandas as pd
 import matplotlib.dates as mdates
@@ -8,8 +7,8 @@ class CryptoStrategy(bt.Strategy):
     # list of parameters which are configurable for the strategy
     params = dict(
         ta_column=None,                        # Optional data column with ma data
-        log=config.get('enable_log', False),  # Enable log messages
-        debug=config.get('enable_debug', False),  # Enable debug messages
+        log=config.get(config.ENABLE_BACKTRADER_LOG, False),  # Enable log messages
+        debug=config.get(config.ENABLE_BACKTRADER_DEBUG, False),  # Enable debug messages
     )
 
     def __init__(self):

@@ -9,9 +9,8 @@ plt.rcParams['figure.dpi'] = 100 # 200
 
 
 # Global variables
-strategy = "rebalance"    # Select strategy between "weighted_dca", "rebalance", "dca" and "hodl"
+strategy = "rebalance"    # Select strategy between "rebalance", "rebalance", "dca" and "hodl"
 indicator = "fng"         # Select indicator between "fng" and "rainbow"
-ticker_symbol = "BTCUSDT"      # currently only works with BTCUSDT
 start = '01/08/2020'
 end = '31/07/2021'
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
@@ -21,7 +20,7 @@ ticker_ta_config = None
 ticker_ta_config = {'kind': 'sma', 'length': 3}
  
 indicator_ta_config = None
-indicator_ta_config = {'kind': 'sma', 'length': 3}
+indicator_ta_config = {'kind': 'wma', 'length': 3}
 
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rainbow_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
@@ -30,8 +29,8 @@ fng_rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each
 rainbow_rebalance_percents = [0, 10, 20, 30, 50, 70, 80, 80, 100]
 
 # logging
-log = False
-debug = False
+backtrader_log = False
+backtrader_debug = False
 
 # Enable / diable parts to bo tested
 run_backtrader_test = True
@@ -59,8 +58,8 @@ def backtrader_test():
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     elif strategy == "rebalance":
         rebalance_percents = fng_rebalance_percents if indicator == "fng" else rainbow_rebalance_percents
         cerebro.addstrategy(RebalanceStrategy, 
@@ -69,20 +68,20 @@ def backtrader_test():
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
                             ta_column=ta_column, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     elif strategy == "dca":
         cerebro.addstrategy(DCAStrategy, 
                             buy_amount=base_buy_amount, 
                             min_order_period=min_order_period,
                             multiplier=1, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     elif strategy == "hodl":
         cerebro.addstrategy(HodlStrategy, 
                             percent=100, 
-                            log=log, 
-                            debug=debug)
+                            log=backtrader_log, 
+                            debug=backtrader_debug)
     else:
         error_message = f"Invalid strategy: '{strategy}'"
         print(f"Error: {error_message}")

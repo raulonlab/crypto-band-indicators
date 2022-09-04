@@ -3,9 +3,16 @@ from distutils.util import strtobool
 from dotenv import load_dotenv
 load_dotenv(verbose=True)
 
+DISABLE_FETCH = 'disable_fetch'
+ONLY_CACHE = 'only_cache'
+ENABLE_BACKTRADER_LOG = 'enable_backtrader_log'
+ENABLE_BACKTRADER_DEBUG = 'enable_backtrader_debug'
+
 __conf = {
-    "disable_fetch": strtobool(os.environ.get('DISABLE_FETCH', '0')),
-    "only_cache": strtobool(os.environ.get('ONLY_CACHE', '0')),
+    DISABLE_FETCH: strtobool(os.environ.get('DISABLE_FETCH', '0')),
+    ONLY_CACHE: strtobool(os.environ.get('ONLY_CACHE', '0')),
+    ENABLE_BACKTRADER_LOG: strtobool(os.environ.get('ENABLE_BACKTRADER_LOG', '0')),
+    ENABLE_BACKTRADER_DEBUG: strtobool(os.environ.get('ENABLE_BACKTRADER_DEBUG', '0')),
 }
 
 def get(name, default = None):
