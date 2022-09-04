@@ -2,9 +2,6 @@ import backtrader as bt
 from crypto_band_indicators.indicators import BandIndicatorBase
 
 
-def _get_ta_ma_config(kind, length): return {
-    "kind": kind, "length": length, "col_numbers": (0,), "col_names": ("close_ma",)}
-
 class BandIndicatorWrapper(bt.Indicator):
     lines = ('band_index', )
 
