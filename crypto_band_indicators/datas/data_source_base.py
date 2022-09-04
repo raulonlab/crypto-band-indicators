@@ -1,5 +1,4 @@
 from __future__ import annotations
-import os
 from typing import Dict, List, Tuple, Union
 import pandas as pd
 import numpy as np
@@ -11,14 +10,20 @@ from wrapt import synchronized
 
 class PandasDataFactory():
     @classmethod
-    def create_feed(cls, lines, **kvargs):
+    def create_feed(cls, additional_lines, **kvargs):
+        print('PandasDataFactory.create_feed():additional_lines: ', additional_lines)
+        # Default PandasData if no additional lines needed
+        if additional_lines is None or len(additional_lines) == 0:
+            return bt.feeds.PandasData(**kvargs)
+
+        # Extend PandasData with addition_lines (lines must be declared at the class level in backtrader)
+        # Ref: https://community.backtrader.com/topic/837/programmatically-extending-a-datafeed
         class_extensions = dict(
-            lines=tuple(lines),
-            params=tuple([(line, None) for line in lines]),
-            # datafields=datafields,
+            lines=tuple(additional_lines),
+            params=tuple([(line, None) for line in additional_lines]),
         )
 
-        extended_class = type('custom_pandas_data', (bt.feeds.PandasData,), class_extensions)
+        extended_class = type('extended_pandas_data', (bt.feeds.PandasData,), class_extensions)
         return extended_class(**kvargs)
 
 def _get_ta_ma_strategy(configs):
@@ -31,10 +36,9 @@ class DataSourceBase():
     cache_file_path = None
     index_column = 'date'
     numeric_columns = []
-    text_columns = []
+    cache_date_format = '%Y-%m-%d'
     
-    def __init__(self, ticker_symbol: str = 'BTCUSDT'):
-        self.ticker_symbol = ticker_symbol
+    def __init__(self):
         self.dataframe = None
         self.ta_columns = []
 
@@ -59,7 +63,6 @@ class DataSourceBase():
 
         # Fetch API data
         if not config.get('disable_fetch') and not (config.get('only_cache') and isinstance(cached_data, pd.DataFrame)):
-            # print(f"{type(self).__name__}: Fetching... ")
             try:
                 missing_data = self.fetch_data(start=missing_start_date)
             except Exception as e:
@@ -88,7 +91,6 @@ class DataSourceBase():
 
         # Write cache if there is something to write
         if not isinstance(cached_data, pd.DataFrame) or all_data.index.max() > cached_data.index.max():
-            # print(f"{type(self).__name__}: Writing cache... ")
             self.write_cache()
 
         return self
@@ -102,7 +104,7 @@ class DataSourceBase():
         local_cache_file_path = self.__class__.cache_file_path if self.__class__.cache_file_path else f"{type(self).__name__}.csv"
         local_index_column = self.__class__.index_column if self.__class__.index_column else 'date'
         self.dataframe.to_csv(local_cache_file_path, sep=';',
-                              date_format='%Y-%m-%d', index=True, index_label=local_index_column)
+                              date_format=self.cache_date_format, index=True, index_label=local_index_column)
 
     def read_cache(self) -> Union[pd.DataFrame, None]:
         local_cache_file_path = self.__class__.cache_file_path if self.__class__.cache_file_path else f"{type(self).__name__}.csv"
@@ -117,7 +119,7 @@ class DataSourceBase():
 
         # Convert column types and discard invalid data
         cached_data[local_index_column] = pd.to_datetime(
-            cached_data[local_index_column], format='%Y-%m-%d')
+            cached_data[local_index_column], format=self.cache_date_format)
 
         for local_numeric_column in local_numeric_columns:
             cached_data[local_numeric_column] = pd.to_numeric(
@@ -155,16 +157,14 @@ class DataSourceBase():
             'openinterest': None,
         }
 
-        # Check MA columns
+        # Add TA columns into the feed parameters to be available in backtrader objects
         if self.ta_columns is not None and len(self.ta_columns) > 0:
-            # params = dict()
             for ta_column in self.ta_columns:
                 ta_column_index = list(local_dataframe.columns).index(ta_column)
                 feed_parameters[ta_column] = ta_column_index
             
-            return PandasDataFactory.create_feed(lines=self.ta_columns, **feed_parameters)
+        return PandasDataFactory.create_feed(additional_lines=self.ta_columns, **feed_parameters)
 
-        return bt.feeds.PandasData(**feed_parameters)
 
     @synchronized
     def append_ta_columns(self, ta_configs: Union[List(Dict), Dict, None] = None, **kwargs) -> DataSourceBase:

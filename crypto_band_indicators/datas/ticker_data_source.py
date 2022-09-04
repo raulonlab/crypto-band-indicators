@@ -14,7 +14,6 @@ class TickerDataSource(DataSourceBase):
     cache_file_path = 'btcusdt_1d_nasdaq.csv'
     index_column = 'date'
     numeric_columns = ['close']
-    text_columns = []
 
     def fetch_data(self, start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
         start = parse_any_date(start, datetime(2010, 1, 1))
@@ -43,10 +42,10 @@ class TickerDataSource(DataSourceBase):
             # Convert column types and discard invalid data
             data['close'] = pd.to_numeric(
                 data['close'], errors='coerce')
-            # Drop 0 or np values
+            # Drop invalid values
             data = data[data["close"] > 0]
 
-            # Remove rows already cached (duplicates)
+            # Remove non requested dates
             if (start):
                 data = data[~(data.index < pd.to_datetime(start))]
 

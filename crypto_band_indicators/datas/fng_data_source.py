@@ -12,7 +12,6 @@ class FngDataSource(DataSourceBase):
     cache_file_path = 'fng_1d_alternative.csv'
     index_column = 'date'
     numeric_columns = ['close']
-    text_columns = ['close_name']
 
     def fetch_data(self, start: Union[str, date, datetime, None] = None) -> Union[pd.DataFrame, None]:
         start = parse_any_date(start, datetime(2010, 1, 1))
@@ -30,7 +29,7 @@ class FngDataSource(DataSourceBase):
                 fng_response = get_fng_history(limit=0)
 
             data = pd.DataFrame(fng_response, columns=[
-                'timestamp', 'value', 'value_classification'])  # .reset_index(drop=True)
+                'timestamp', 'value', 'value_classification'])
 
             if not isinstance(data, pd.DataFrame) or data.empty:
                 return None
@@ -43,13 +42,13 @@ class FngDataSource(DataSourceBase):
                 lambda x: datetime.fromtimestamp(int(x)).date()))
             data['close'] = pd.to_numeric(
                 data['close'], errors='raise')
-            # Drop 0 or np values
+            # Drop invalid rows
             data = data[data["close"] > 0]
 
             # Set index
             data = data.set_index('date', drop=True)
 
-            # Remove rows already cached (duplicates)
+            # Remove non requested dates
             if (start):
                 data = data[~(data.index < pd.to_datetime(start))]
 
