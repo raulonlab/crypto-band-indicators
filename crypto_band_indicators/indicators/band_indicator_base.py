@@ -7,6 +7,9 @@ class BandDetails:
     name=''
     color=''
     multiplier=1
+
+    def __str__(self):
+        return str(self.__dict__)
         
 
 class BandIndicatorBase:

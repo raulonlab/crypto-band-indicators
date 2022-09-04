@@ -3,22 +3,25 @@ from crypto_band_indicators.backtrader import RebalanceStrategy, WeightedDCAStra
 from crypto_band_indicators.datas import TickerDataSource, FngDataSource
 from crypto_band_indicators.indicators import FngBandIndicator
 from crypto_band_indicators import utils
-import pprint
-pprint = pprint.PrettyPrinter(indent=2).pprint
 import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
 
 # Variables #########################
-strategy = "weighted_dca"    # Select strategy between "weighted_dca" and "rebalance"
+strategy = "rebalance"    # Select strategy between "weighted_dca" and "rebalance"
 start = '01/01/2021'   # start date of the simulation. Ex: '01/08/2020' or None
 end = '31/08/2021'           # end date of the simulation. Ex: '01/08/2020' or None
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period = 6              # Minimum period in days to place orders
 base_buy_amount = 100            # Amount purchased in standard DCA
+
+# Weighted multipliers and rebalance percents
 weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each index
-ta_column = None
+
+# ticker and indicator ta_configs: smooths data variations by using a MA algorithm
+ticker_ta_config = {'kind': 'sma', 'length': 3}  # Ex: {'kind': 'sma', 'length': 3} or None
+indicator_ta_config = {'kind': 'wma', 'length': 3}  # Ex: {'kind': 'wma', 'length': 3} or None
 
 # logging
 backtrader_log = True
@@ -32,6 +35,10 @@ run_plot_backtrader_result_test = True
 
 # Data sources
 ticker_data_source = TickerDataSource().load()
+ta_column = None
+if ticker_ta_config is not None:
+    ticker_data_source.append_ta_columns(ticker_ta_config)
+    ta_column = ticker_data_source.get_ta_columns()[0]
 
 # Fng Indicator 
 fng = FngBandIndicator()
@@ -40,14 +47,14 @@ def get_value_test():
     # Get Current Fear and Greed index
     fng_details = fng.get_band_details_at()
     print('Current FnG:')
-    pprint(fng_details)
+    print(fng_details)
 
     # Get Fear and Greed index at date
     at_date = '01/02/2021'    # date when look up the Fng
 
     fng_details = fng.get_band_details_at(at_date=at_date)
     print(f"FnG at {at_date}:")
-    pprint(fng_details)
+    print(fng_details)
 
 
 def plot_test():
@@ -64,6 +71,7 @@ def backtrader_test():
     if strategy == "weighted_dca":
         cerebro.addstrategy(WeightedDCAStrategy, 
                             indicator_class=FngBandIndicator,
+                            indicator_ta_config=indicator_ta_config,
                             ta_column=ta_column,
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
@@ -73,6 +81,7 @@ def backtrader_test():
     elif strategy == "rebalance":
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=FngBandIndicator,
+                            indicator_ta_config=indicator_ta_config,
                             ta_column=ta_column,
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 

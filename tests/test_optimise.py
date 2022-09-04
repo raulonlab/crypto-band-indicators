@@ -11,6 +11,10 @@ plt.rcParams['figure.dpi'] = 100 # 200
 # Fixed variables ################
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 base_buy_amount  = 100            # Amount purchased in standard DCA
+# start = '01/08/2020'  # defined in main() function
+# end = '31/07/2021'    # defined in main() function
+
+# Weighted multipliers and rebalance percents
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # buy amount multipliers (weighted) for each band
 fng_rebalance_percents   = [85, 65, 50, 15, 10]         # rebalance percentages of BTC / total for each band
 rwa_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]

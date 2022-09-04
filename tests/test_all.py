@@ -7,26 +7,24 @@ import matplotlib.pyplot as plt
 plt.rcParams['figure.figsize'] = [12, 6]
 plt.rcParams['figure.dpi'] = 100 # 200
 
-
 # Global variables
-strategy = "rebalance"    # Select strategy between "rebalance", "rebalance", "dca" and "hodl"
+strategy = "weighted_dca"    # Select strategy between "rebalance", "weighted_dca", "dca" and "hodl"
 indicator = "fng"         # Select indicator between "fng" and "rainbow"
 start = '01/08/2020'
 end = '31/07/2021'
 initial_cash = 10000.0        # initial broker cash. Default 10000 usd
 min_order_period = 7              # Minimum period in days to place orders
 base_buy_amount = 100            # Amount purchased in standard DCA
-ticker_ta_config = None
-ticker_ta_config = {'kind': 'sma', 'length': 3}
- 
-indicator_ta_config = None
-indicator_ta_config = {'kind': 'wma', 'length': 3}
 
+# Weighted multipliers and rebalance percents
 fng_weighted_multipliers = [1.5, 1.25, 1, 0.75, 0.5]    # order amount multipliers (weighted) for each index
 rainbow_weighted_multipliers = [0, 0.1, 0.2, 0.3, 0.5, 0.8, 1.3, 2.1, 3.4]
-
 fng_rebalance_percents = [85, 65, 50, 15, 10]   # rebalance percentages for each index
 rainbow_rebalance_percents = [0, 10, 20, 30, 50, 70, 80, 80, 100]
+
+# ticker and indicator ta_configs: smooths data variations by using a MA algorithm
+ticker_ta_config = {'kind': 'sma', 'length': 3}  # Ex: {'kind': 'sma', 'length': 3} or None
+indicator_ta_config = {'kind': 'wma', 'length': 3}  # Ex: {'kind': 'wma', 'length': 3} or None
 
 # logging
 backtrader_log = False
@@ -55,6 +53,7 @@ def backtrader_test():
         cerebro.addstrategy(WeightedDCAStrategy, 
                             indicator_class=indicator_class,
                             indicator_ta_config=indicator_ta_config,
+                            ta_column=ta_column, 
                             base_buy_amount=base_buy_amount,
                             min_order_period=min_order_period, 
                             weighted_multipliers=weighted_multipliers, 
@@ -65,9 +64,9 @@ def backtrader_test():
         cerebro.addstrategy(RebalanceStrategy, 
                             indicator_class=indicator_class,
                             indicator_ta_config=indicator_ta_config,
+                            ta_column=ta_column, 
                             min_order_period=min_order_period,
                             rebalance_percents=rebalance_percents, 
-                            ta_column=ta_column, 
                             log=backtrader_log, 
                             debug=backtrader_debug)
     elif strategy == "dca":
